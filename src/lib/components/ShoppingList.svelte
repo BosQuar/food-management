@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { ChevronDown, ChevronRight, ChevronsUpDown } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button';
 	import ShoppingItem from './ShoppingItem.svelte';
 	import type { ShoppingItem as ShoppingItemType } from '$lib/api';
 
@@ -10,6 +12,31 @@
 	}
 
 	let { groupedItems, onToggle, onDelete }: Props = $props();
+
+	// Track collapsed categories by name
+	let collapsedCategories = $state<Set<string>>(new Set());
+
+	function toggleCategory(categoryName: string) {
+		if (collapsedCategories.has(categoryName)) {
+			collapsedCategories.delete(categoryName);
+		} else {
+			collapsedCategories.add(categoryName);
+		}
+		collapsedCategories = new Set(collapsedCategories);
+	}
+
+	function toggleAllCategories() {
+		const allCategoryNames = groupedItems.map(([name]) => name);
+		if (collapsedCategories.size === allCategoryNames.length) {
+			// All collapsed, expand all
+			collapsedCategories = new Set();
+		} else {
+			// Collapse all
+			collapsedCategories = new Set(allCategoryNames);
+		}
+	}
+
+	const allCollapsed = $derived(collapsedCategories.size === groupedItems.length && groupedItems.length > 0);
 </script>
 
 {#if groupedItems.length === 0}
@@ -19,20 +46,34 @@
 	</div>
 {:else}
 	<div class="space-y-4">
+		<div class="flex justify-end">
+			<Button variant="ghost" size="sm" onclick={toggleAllCategories}>
+				<ChevronsUpDown class="h-4 w-4 mr-1" />
+				{allCollapsed ? 'Expandera alla' : 'Minimera alla'}
+			</Button>
+		</div>
 		{#each groupedItems as [categoryName, items]}
 			<Card>
-				<CardHeader class="py-3">
-					<CardTitle class="text-sm font-medium text-muted-foreground">
+				<CardHeader class="py-3 cursor-pointer select-none" onclick={() => toggleCategory(categoryName)}>
+					<CardTitle class="text-sm font-medium text-muted-foreground flex items-center gap-2">
+						{#if collapsedCategories.has(categoryName)}
+							<ChevronRight class="h-4 w-4" />
+						{:else}
+							<ChevronDown class="h-4 w-4" />
+						{/if}
 						{categoryName}
+						<span class="text-xs">({items.length})</span>
 					</CardTitle>
 				</CardHeader>
-				<CardContent class="pt-0 pb-2">
-					<div class="divide-y">
-						{#each items as item (item.id)}
-							<ShoppingItem {item} {onToggle} {onDelete} />
-						{/each}
-					</div>
-				</CardContent>
+				{#if !collapsedCategories.has(categoryName)}
+					<CardContent class="pt-0 pb-2">
+						<div class="divide-y">
+							{#each items as item (item.id)}
+								<ShoppingItem {item} {onToggle} {onDelete} />
+							{/each}
+						</div>
+					</CardContent>
+				{/if}
 			</Card>
 		{/each}
 	</div>

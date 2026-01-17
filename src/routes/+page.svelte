@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
+	import * as Popover from '$lib/components/ui/popover';
 	import { shoppingStore } from '$lib/stores/shopping.svelte';
 	import { syncStore } from '$lib/stores/sync.svelte';
 	import ShoppingList from '$lib/components/ShoppingList.svelte';
@@ -42,11 +43,22 @@
 		</div>
 
 		<div class="flex items-center gap-2">
-			{#if syncStore.isConnected}
-				<Wifi class="h-4 w-4 text-green-500" />
-			{:else}
-				<WifiOff class="h-4 w-4 text-muted-foreground" />
-			{/if}
+			<Popover.Root>
+				<Popover.Trigger>
+					{#if syncStore.isConnected}
+						<Wifi class="h-4 w-4 text-green-500" />
+					{:else}
+						<WifiOff class="h-4 w-4 text-muted-foreground" />
+					{/if}
+				</Popover.Trigger>
+				<Popover.Content class="w-auto p-2 text-sm">
+					{#if syncStore.isConnected}
+						Realtidssynk aktiv
+					{:else}
+						Realtidssynk ej ansluten
+					{/if}
+				</Popover.Content>
+			</Popover.Root>
 
 			<AlertDialog.Root bind:open={showResetDialog}>
 				<AlertDialog.Trigger>

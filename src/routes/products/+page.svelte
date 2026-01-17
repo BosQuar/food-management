@@ -216,6 +216,7 @@
 			{editMode}
 			shoppingItems={shoppingStore.items}
 			onAddToList={handleAddToList}
+			onRemoveFromList={(id) => shoppingStore.delete(id)}
 			onEdit={openEditDialog}
 			onDelete={openDeleteDialog}
 		/>

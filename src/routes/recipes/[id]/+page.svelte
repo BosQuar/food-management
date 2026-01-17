@@ -206,11 +206,11 @@
 				Välj vilka ingredienser du vill lägga till ({servings} portioner)
 			</Dialog.Description>
 		</Dialog.Header>
-		<div class="max-h-80 overflow-y-auto py-4">
+		<div class="max-h-80 overflow-y-auto overflow-x-hidden py-4">
 			{#if recipe}
-				<div class="space-y-3">
+				<div class="space-y-1">
 					{#each recipe.ingredients as ingredient, index}
-						<label class="flex items-center gap-3 cursor-pointer hover:bg-accent rounded-md p-2 -mx-2">
+						<label class="flex items-center gap-3 cursor-pointer hover:bg-accent rounded-md p-2">
 							<Checkbox
 								checked={selectedIngredients.has(index)}
 								onCheckedChange={() => toggleIngredient(index)}
