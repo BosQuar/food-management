@@ -3,7 +3,7 @@
   import { browser, dev } from "$app/environment";
   import "../app.css";
   import { page } from "$app/stores";
-  import { ShoppingCart, Package, BookOpen, WifiOff } from "@lucide/svelte";
+  import { ShoppingCart, Package, BookOpen, Star, WifiOff } from "@lucide/svelte";
   import { initOfflineDB, isOnline } from "$lib/db/idb";
 
   let { children } = $props();
@@ -13,6 +13,7 @@
     { href: "/", label: "Inköpslista", icon: ShoppingCart },
     { href: "/products", label: "Produkter", icon: Package },
     { href: "/recipes", label: "Recept", icon: BookOpen },
+    { href: "/staples", label: "Basvaror", icon: Star },
   ];
 
   onMount(async () => {
