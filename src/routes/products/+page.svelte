@@ -214,6 +214,7 @@
 			categories={productsStore.categories}
 			{searchQuery}
 			{editMode}
+			shoppingItems={shoppingStore.items}
 			onAddToList={handleAddToList}
 			onEdit={openEditDialog}
 			onDelete={openDeleteDialog}

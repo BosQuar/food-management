@@ -162,24 +162,24 @@ router.post('/custom', (req, res) => {
 router.put('/:id', (req, res) => {
 	const db = getDb();
 	const { id } = req.params;
-	const { quantity, unit, notes, is_done } = req.body;
+	const body = req.body;
 
 	const existing = db.prepare('SELECT * FROM shopping_items WHERE id = ?').get(id);
 	if (!existing) {
 		return res.status(404).json({ error: 'Shopping item not found' });
 	}
 
+	// Use hasOwnProperty to check if key was explicitly provided (even if null)
+	const quantity = 'quantity' in body ? body.quantity : existing.quantity;
+	const unit = 'unit' in body ? body.unit : existing.unit;
+	const notes = 'notes' in body ? body.notes : existing.notes;
+	const is_done = 'is_done' in body ? body.is_done : existing.is_done;
+
 	db.prepare(`
 		UPDATE shopping_items
 		SET quantity = ?, unit = ?, notes = ?, is_done = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?
-	`).run(
-		quantity ?? existing.quantity,
-		unit ?? existing.unit,
-		notes ?? existing.notes,
-		is_done ?? existing.is_done,
-		id
-	);
+	`).run(quantity, unit, notes, is_done, id);
 
 	const item = db.prepare(`
 		SELECT si.*, p.name as product_name, sc.name as category_name
