@@ -19,7 +19,10 @@
 			</CardTitle>
 		</CardHeader>
 		<CardContent class="pt-0">
-			<p class="text-sm text-muted-foreground">
+			{#if recipe.description}
+				<p class="text-sm text-muted-foreground mb-2 line-clamp-2">{recipe.description}</p>
+			{/if}
+			<p class="text-xs text-muted-foreground">
 				{recipe.ingredient_count} ingredienser
 				{#if recipe.servings}
 					· {recipe.servings} portioner

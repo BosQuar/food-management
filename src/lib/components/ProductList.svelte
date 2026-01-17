@@ -3,8 +3,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, Check, ShoppingCart, X, ChevronsUpDown } from '@lucide/svelte';
+	import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, Check, ShoppingCart, X, ChevronsUpDown, StickyNote } from '@lucide/svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import type { ProductCategory, Product, ShoppingItem } from '$lib/api';
+	import { uiStore } from '$lib/stores/ui.svelte';
 
 	interface Props {
 		categories: ProductCategory[];
@@ -13,19 +16,20 @@
 		shoppingItems: ShoppingItem[];
 		onAddToList: (product: Product, quantity: number | null, unit: string) => void;
 		onRemoveFromList: (shoppingItemId: number) => void;
+		onUpdateNotes: (shoppingItemId: number, notes: string | null) => void;
 		onEdit: (product: Product) => void;
 		onDelete: (product: Product) => void;
 	}
 
-	let { categories, searchQuery, editMode, shoppingItems, onAddToList, onRemoveFromList, onEdit, onDelete }: Props = $props();
+	let { categories, searchQuery, editMode, shoppingItems, onAddToList, onRemoveFromList, onUpdateNotes, onEdit, onDelete }: Props = $props();
 
 	// Check if product is in shopping list (not done)
 	function getShoppingItem(productId: number): ShoppingItem | undefined {
 		return shoppingItems.find(item => item.product_id === productId && !item.is_done);
 	}
 
-	// Track collapsed categories by ID
-	let collapsedCategories = $state<Set<number>>(new Set());
+	// Use store for collapsed categories (persists across route changes)
+	const collapsedCategories = $derived(uiStore.productCollapsed);
 
 	// Track quantity input per product
 	let quantities = $state<Record<number, string>>({});
@@ -50,23 +54,48 @@
 		pendingRemove = null;
 	}
 
-	function toggleCategory(categoryId: number) {
-		if (collapsedCategories.has(categoryId)) {
-			collapsedCategories.delete(categoryId);
-		} else {
-			collapsedCategories.add(categoryId);
+	// Notes dialog
+	let showNotesDialog = $state(false);
+	let editingNotes = $state<{ shoppingItemId: number; productName: string; notes: string } | null>(null);
+
+	function openNotesDialog(shoppingItem: ShoppingItem, productName: string) {
+		editingNotes = {
+			shoppingItemId: shoppingItem.id,
+			productName,
+			notes: shoppingItem.notes || ''
+		};
+		showNotesDialog = true;
+	}
+
+	function handleSaveNotes() {
+		if (editingNotes) {
+			const notes = editingNotes.notes.trim() || null;
+			onUpdateNotes(editingNotes.shoppingItemId, notes);
 		}
-		collapsedCategories = new Set(collapsedCategories);
+		showNotesDialog = false;
+		editingNotes = null;
+	}
+
+	function handleClearNotes() {
+		if (editingNotes) {
+			onUpdateNotes(editingNotes.shoppingItemId, null);
+		}
+		showNotesDialog = false;
+		editingNotes = null;
+	}
+
+	function toggleCategory(categoryId: number) {
+		uiStore.toggleProductCategory(categoryId);
 	}
 
 	function toggleAllCategories() {
 		const allCategoryIds = categories.map(c => c.id);
 		if (collapsedCategories.size === allCategoryIds.length) {
 			// All collapsed, expand all
-			collapsedCategories = new Set();
+			uiStore.setProductCollapsed(new Set());
 		} else {
 			// Collapse all
-			collapsedCategories = new Set(allCategoryIds);
+			uiStore.setProductCollapsed(new Set(allCategoryIds));
 		}
 	}
 
@@ -176,7 +205,18 @@
 											<Trash2 class="h-4 w-4" />
 										</Button>
 									{:else}
-										<!-- Add mode: show quantity input and add button -->
+										<!-- Add mode: show notes, quantity input and add button -->
+										{#if inList}
+											<Button
+												variant="ghost"
+												size="icon"
+												class="h-8 w-8 shrink-0 {inList.notes ? 'text-green-600' : 'text-muted-foreground/50 hover:text-muted-foreground'}"
+												onclick={() => openNotesDialog(inList, product.name)}
+											>
+												<StickyNote class="h-4 w-4" />
+											</Button>
+										{/if}
+
 										<Input
 											type="number"
 											min="0.1"
@@ -240,3 +280,35 @@
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
+
+<!-- Notes dialog -->
+<Dialog.Root bind:open={showNotesDialog}>
+	<Dialog.Content class="max-w-sm">
+		<Dialog.Header>
+			<Dialog.Title>Anteckning</Dialog.Title>
+			<Dialog.Description>{editingNotes?.productName}</Dialog.Description>
+		</Dialog.Header>
+		{#if editingNotes}
+			<div class="py-4">
+				<Textarea
+					placeholder="T.ex. Dove original..."
+					class="resize-none"
+					rows={3}
+					bind:value={editingNotes.notes}
+					onkeydown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSaveNotes())}
+				/>
+			</div>
+		{/if}
+		<Dialog.Footer class="flex-col sm:flex-row gap-2">
+			<Button variant="ghost" class="text-destructive hover:text-destructive sm:mr-auto" onclick={handleClearNotes}>
+				Rensa
+			</Button>
+			<Button variant="outline" onclick={() => { showNotesDialog = false; editingNotes = null; }}>
+				Avbryt
+			</Button>
+			<Button onclick={handleSaveNotes}>
+				Spara
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

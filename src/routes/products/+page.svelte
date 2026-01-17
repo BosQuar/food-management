@@ -142,16 +142,15 @@
 				{editMode ? 'Klar' : 'Redigera'}
 			</Button>
 
-			{#if editMode}
-				<Dialog.Root bind:open={showAddDialog}>
-					<Dialog.Trigger>
-						{#snippet child({ props })}
-							<Button size="sm" {...props}>
-								<Plus class="h-4 w-4 mr-2" />
-								Ny produkt
-							</Button>
-						{/snippet}
-					</Dialog.Trigger>
+			<Dialog.Root bind:open={showAddDialog}>
+				<Dialog.Trigger>
+					{#snippet child({ props })}
+						<Button size="sm" {...props}>
+							<Plus class="h-4 w-4 mr-2" />
+							Ny produkt
+						</Button>
+					{/snippet}
+				</Dialog.Trigger>
 					<Dialog.Content>
 						<Dialog.Header>
 							<Dialog.Title>Lägg till produkt</Dialog.Title>
@@ -185,7 +184,6 @@
 						</Dialog.Footer>
 					</Dialog.Content>
 				</Dialog.Root>
-			{/if}
 		</div>
 	</div>
 
@@ -217,6 +215,7 @@
 			shoppingItems={shoppingStore.items}
 			onAddToList={handleAddToList}
 			onRemoveFromList={(id) => shoppingStore.delete(id)}
+			onUpdateNotes={(id, notes) => shoppingStore.update(id, { notes })}
 			onEdit={openEditDialog}
 			onDelete={openDeleteDialog}
 		/>

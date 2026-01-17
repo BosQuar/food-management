@@ -137,6 +137,10 @@
 			</Button>
 		</div>
 	{:else if recipe}
+		{#if recipe.description}
+			<p class="text-muted-foreground">{recipe.description}</p>
+		{/if}
+
 		<div class="flex flex-wrap items-center gap-4">
 			<PortionScaler
 				{servings}

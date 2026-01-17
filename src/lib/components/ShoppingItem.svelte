@@ -24,17 +24,15 @@
 	/>
 
 	<div class="flex-1 min-w-0">
-		<p class="text-sm font-medium {isDone ? 'line-through text-muted-foreground' : ''}">
-			{displayName}
+		<p class="text-sm {isDone ? 'line-through text-muted-foreground' : ''}">
+			<span class="font-medium">{displayName}</span>
+			{#if item.notes}
+				<span class="text-muted-foreground"> - {item.notes}</span>
+			{/if}
 		</p>
-		{#if item.quantity !== null || item.notes}
+		{#if item.quantity !== null}
 			<p class="text-xs text-muted-foreground">
-				{#if item.quantity !== null}
-					{item.quantity} {item.unit}
-				{/if}
-				{#if item.notes}
-					<span class="{item.quantity !== null ? 'ml-2' : ''} italic">({item.notes})</span>
-				{/if}
+				{item.quantity} {item.unit}
 			</p>
 		{/if}
 	</div>

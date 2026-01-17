@@ -59,15 +59,15 @@ router.get('/:id', (req, res) => {
 // POST /api/recipes - skapa med ingredienser
 router.post('/', (req, res) => {
 	const db = getDb();
-	const { name, instructions, servings, source_url, ingredients } = req.body;
+	const { name, description, instructions, servings, source_url, ingredients } = req.body;
 
 	if (!name) {
 		return res.status(400).json({ error: 'Name is required' });
 	}
 
 	const insertRecipe = db.prepare(`
-		INSERT INTO recipes (name, instructions, servings, source_url)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO recipes (name, description, instructions, servings, source_url)
+		VALUES (?, ?, ?, ?, ?)
 	`);
 
 	const insertIngredient = db.prepare(`
@@ -76,7 +76,7 @@ router.post('/', (req, res) => {
 	`);
 
 	const transaction = db.transaction(() => {
-		const result = insertRecipe.run(name, instructions || null, servings || 4, source_url || null);
+		const result = insertRecipe.run(name, description || null, instructions || null, servings || 4, source_url || null);
 		const recipeId = result.lastInsertRowid;
 
 		if (ingredients && Array.isArray(ingredients)) {
@@ -113,7 +113,7 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
 	const db = getDb();
 	const { id } = req.params;
-	const { name, instructions, servings, source_url, ingredients } = req.body;
+	const { name, description, instructions, servings, source_url, ingredients } = req.body;
 
 	const existing = db.prepare('SELECT * FROM recipes WHERE id = ?').get(id);
 	if (!existing) {
@@ -122,7 +122,7 @@ router.put('/:id', (req, res) => {
 
 	const updateRecipe = db.prepare(`
 		UPDATE recipes
-		SET name = ?, instructions = ?, servings = ?, source_url = ?
+		SET name = ?, description = ?, instructions = ?, servings = ?, source_url = ?
 		WHERE id = ?
 	`);
 
@@ -136,6 +136,7 @@ router.put('/:id', (req, res) => {
 	const transaction = db.transaction(() => {
 		updateRecipe.run(
 			name ?? existing.name,
+			description ?? existing.description,
 			instructions ?? existing.instructions,
 			servings ?? existing.servings,
 			source_url ?? existing.source_url,

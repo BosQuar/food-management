@@ -151,6 +151,7 @@ export interface RecipeIngredient {
 export interface Recipe {
 	id: number;
 	name: string;
+	description: string | null;
 	instructions: string | null;
 	servings: number;
 	source_url: string | null;
@@ -161,6 +162,7 @@ export interface Recipe {
 export interface RecipeSummary {
 	id: number;
 	name: string;
+	description: string | null;
 	instructions: string | null;
 	servings: number;
 	source_url: string | null;
@@ -170,6 +172,7 @@ export interface RecipeSummary {
 
 export interface CreateRecipe {
 	name: string;
+	description?: string;
 	instructions?: string;
 	servings?: number;
 	source_url?: string;

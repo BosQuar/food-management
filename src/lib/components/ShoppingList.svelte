@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import ShoppingItem from './ShoppingItem.svelte';
 	import type { ShoppingItem as ShoppingItemType } from '$lib/api';
+	import { uiStore } from '$lib/stores/ui.svelte';
 
 	interface Props {
 		groupedItems: [string, ShoppingItemType[]][];
@@ -13,26 +14,21 @@
 
 	let { groupedItems, onToggle, onDelete }: Props = $props();
 
-	// Track collapsed categories by name
-	let collapsedCategories = $state<Set<string>>(new Set());
+	// Use store for collapsed categories (persists across route changes)
+	const collapsedCategories = $derived(uiStore.shoppingCollapsed);
 
 	function toggleCategory(categoryName: string) {
-		if (collapsedCategories.has(categoryName)) {
-			collapsedCategories.delete(categoryName);
-		} else {
-			collapsedCategories.add(categoryName);
-		}
-		collapsedCategories = new Set(collapsedCategories);
+		uiStore.toggleShoppingCategory(categoryName);
 	}
 
 	function toggleAllCategories() {
 		const allCategoryNames = groupedItems.map(([name]) => name);
 		if (collapsedCategories.size === allCategoryNames.length) {
 			// All collapsed, expand all
-			collapsedCategories = new Set();
+			uiStore.setShoppingCollapsed(new Set());
 		} else {
 			// Collapse all
-			collapsedCategories = new Set(allCategoryNames);
+			uiStore.setShoppingCollapsed(new Set(allCategoryNames));
 		}
 	}
 

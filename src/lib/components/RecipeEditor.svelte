@@ -27,6 +27,7 @@
 	let { recipe, products, onsave, oncancel, loading = false }: Props = $props();
 
 	let name = $state(recipe?.name || '');
+	let description = $state(recipe?.description || '');
 	let servings = $state(recipe?.servings || 4);
 	let instructions = $state(recipe?.instructions || '');
 	let sourceUrl = $state(recipe?.source_url || '');
@@ -90,6 +91,7 @@
 
 		onsave({
 			name,
+			description: description || undefined,
 			servings,
 			instructions: instructions || undefined,
 			source_url: sourceUrl || undefined,
@@ -133,6 +135,11 @@
 		<div class="space-y-2">
 			<Label for="name">Receptnamn</Label>
 			<Input id="name" bind:value={name} placeholder="T.ex. Pasta Carbonara" />
+		</div>
+
+		<div class="space-y-2">
+			<Label for="description">Beskrivning</Label>
+			<Input id="description" bind:value={description} placeholder="Kort beskrivning av receptet..." />
 		</div>
 
 		<div class="space-y-2">
