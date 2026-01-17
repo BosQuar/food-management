@@ -124,12 +124,12 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 2.5 API routes - Backup
+### 2.5 API routes - Backup ✅
 
 **Beroende:** 2.2, 2.3, 2.4
 
-- [ ] `GET /api/backup` - exportera all data som JSON
-- [ ] `POST /api/restore` - återställ från JSON-backup
+- [x] `GET /api/backup` - exportera all data som JSON
+- [x] `POST /api/restore` - återställ från JSON-backup
 
 **Mål:** Kan ta backup och återställa hela databasen
 
