@@ -39,8 +39,8 @@ if (process.env.NODE_ENV === 'production') {
 	const buildPath = join(__dirname, '../build');
 	app.use(express.static(buildPath));
 
-	// SPA fallback
-	app.get('*', (req, res) => {
+	// SPA fallback - Express 5 uses {*path} syntax for wildcards
+	app.get('{*path}', (req, res) => {
 		if (!req.path.startsWith('/api')) {
 			res.sendFile(join(buildPath, 'index.html'));
 		}

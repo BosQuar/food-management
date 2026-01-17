@@ -29,6 +29,7 @@
 	"dependencies": {
 		"@internationalized/date": "^3.10.1",
 		"@lucide/svelte": "^0.562.0",
+		"@sveltejs/adapter-static": "^3.0.10",
 		"@tanstack/table-core": "^8.21.3",
 		"better-sqlite3": "^12.6.2",
 		"bits-ui": "^2.15.4",

@@ -370,15 +370,15 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 5.2 Docker setup
+### 5.2 Docker setup ✅
 
 **Beroende:** Alla tidigare faser
 
-- [ ] Skapa `Dockerfile` (node:20-alpine)
-- [ ] Skapa `docker-compose.yml`
-- [ ] Volume för `data/` (persistent databas)
-- [ ] Port 8500
-- [ ] Testa `docker-compose up --build`
+- [x] Skapa `Dockerfile` (node:20-alpine)
+- [x] Skapa `docker-compose.yml`
+- [x] Volume för `data/` (persistent databas)
+- [x] Port 8500
+- [x] Testa `docker-compose up --build`
 
 **Mål:** Appen kör i Docker med persistent data
 
