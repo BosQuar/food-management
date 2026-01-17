@@ -231,19 +231,19 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 3.6 Receptvy (visa)
+### 3.6 Receptvy (visa) ✅
 
 **Beroende:** 3.5
 
-- [ ] Skapa `src/routes/recipes/[id]/+page.svelte`
-- [ ] Skapa `src/lib/components/PortionScaler.svelte`
-- [ ] Visa titel
-- [ ] Portioner med +/- knappar
-- [ ] Ingredienslista med skalade mängder
-- [ ] Instruktioner (stödjer markdown)
-- [ ] Knapp "Lägg till på inköpslistan" (alla ingredienser)
-- [ ] Redigera-knapp → `/recipes/[id]/edit`
-- [ ] Ta bort-knapp med bekräftelse
+- [x] Skapa `src/routes/recipes/[id]/+page.svelte`
+- [x] Skapa `src/lib/components/PortionScaler.svelte`
+- [x] Visa titel
+- [x] Portioner med +/- knappar
+- [x] Ingredienslista med skalade mängder
+- [x] Instruktioner (stödjer markdown)
+- [x] Knapp "Lägg till på inköpslistan" (alla ingredienser)
+- [x] Redigera-knapp → `/recipes/[id]/edit`
+- [x] Ta bort-knapp med bekräftelse
 
 **Mål:** Kan se recept, skala portioner, och lägga ingredienser på listan
 
