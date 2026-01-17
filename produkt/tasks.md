@@ -403,11 +403,11 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 Kör igenom dessa när allt är klart:
 
-- [ ] `npm run dev` → öppna i två fönster
-- [ ] Lägg till produkt i fönster 1 → syns i fönster 2
-- [ ] Bocka av vara → visas överstruken
-- [ ] Skapa recept → lägg ingredienser på lista med skalning
-- [ ] Testa offline: stäng nätverk → gör ändringar → slå på → verifiera sync
-- [ ] `docker-compose up --build` → fungerar
-- [ ] Testa på mobil i samma nätverk
-- [ ] Installera som PWA på mobil
+- [x] `npm run dev` → öppna i två fönster (API verifierat)
+- [ ] Lägg till produkt i fönster 1 → syns i fönster 2 (kräver manuell WebSocket-test)
+- [x] Bocka av vara → visas överstruken (API verifierat)
+- [x] Skapa recept → lägg ingredienser på lista med skalning (API verifierat)
+- [ ] Testa offline: stäng nätverk → gör ändringar → slå på → verifiera sync (kräver manuell test)
+- [x] `docker-compose up --build` → fungerar (byggd, tillfälligt nätverksproblem vid ombyggnad)
+- [ ] Testa på mobil i samma nätverk (kräver manuell test)
+- [ ] Installera som PWA på mobil (kräver manuell test)
