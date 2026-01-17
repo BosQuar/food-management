@@ -150,9 +150,9 @@
 										/>
 
 										<Button
-											variant={recentlyAdded.has(product.id) ? "default" : "ghost"}
+											variant="ghost"
 											size="icon"
-											class="h-8 w-8 shrink-0 transition-colors {recentlyAdded.has(product.id) ? 'bg-green-600 hover:bg-green-600 text-white' : 'text-primary hover:text-primary hover:bg-primary/10'}"
+											class="h-8 w-8 shrink-0 transition-colors {recentlyAdded.has(product.id) ? 'text-green-600' : 'text-primary hover:text-primary hover:bg-primary/10'}"
 											onclick={() => handleAdd(product)}
 											disabled={recentlyAdded.has(product.id)}
 										>

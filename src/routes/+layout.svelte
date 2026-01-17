@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import '../app.css';
 	import { page } from '$app/stores';
 	import { ShoppingCart, Package, BookOpen, WifiOff } from '@lucide/svelte';
@@ -24,8 +24,8 @@
 		window.addEventListener('online', () => online = true);
 		window.addEventListener('offline', () => online = false);
 
-		// Register service worker
-		if (browser && 'serviceWorker' in navigator) {
+		// Register service worker (production only)
+		if (browser && !dev && 'serviceWorker' in navigator) {
 			try {
 				const registration = await navigator.serviceWorker.register('/service-worker.js', {
 					type: 'module'
@@ -33,6 +33,13 @@
 				console.log('Service Worker registered:', registration.scope);
 			} catch (err) {
 				console.error('Service Worker registration failed:', err);
+			}
+		} else if (browser && dev && 'serviceWorker' in navigator) {
+			// Unregister service worker in development
+			const registrations = await navigator.serviceWorker.getRegistrations();
+			for (const registration of registrations) {
+				await registration.unregister();
+				console.log('Service Worker unregistered for development');
 			}
 		}
 	});

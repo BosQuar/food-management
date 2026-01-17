@@ -96,19 +96,13 @@ async function handleApiRequest(request: Request): Promise<Response> {
 }
 
 /**
- * Handle static asset requests with cache-first strategy
+ * Handle static asset requests with network-first, cache fallback strategy
  */
 async function handleStaticRequest(request: Request): Promise<Response> {
 	const cache = await caches.open(CACHE_NAME);
 
-	// Check cache first
-	const cachedResponse = await cache.match(request);
-	if (cachedResponse) {
-		return cachedResponse;
-	}
-
-	// Not in cache, fetch from network
 	try {
+		// Try network first
 		const response = await fetch(request);
 
 		// Cache successful responses
@@ -118,6 +112,12 @@ async function handleStaticRequest(request: Request): Promise<Response> {
 
 		return response;
 	} catch {
+		// Network failed, try cache
+		const cachedResponse = await cache.match(request);
+		if (cachedResponse) {
+			return cachedResponse;
+		}
+
 		// Network failed, return offline page if it's a navigation request
 		if (request.mode === 'navigate') {
 			const offlinePage = await cache.match('/');
