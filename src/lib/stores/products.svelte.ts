@@ -1,4 +1,5 @@
 import { productsApi, type ProductCategory, type Product, type Category, type CreateProduct } from '$lib/api';
+import { productsDB, categoriesDB, isOnline } from '$lib/db/idb';
 
 let categories = $state<ProductCategory[]>([]);
 let loading = $state(false);
@@ -14,9 +15,35 @@ export function getProductsStore() {
 			loading = true;
 			error = null;
 			try {
-				categories = await productsApi.getAll();
+				// Try to fetch from API
+				const data = await productsApi.getAll();
+				categories = data;
+				// Cache in IndexedDB
+				const allProducts = data.flatMap(c => c.products);
+				const cats = data.map(({ products, ...cat }) => cat);
+				await Promise.all([
+					categoriesDB.bulkReplace(cats),
+					productsDB.bulkReplace(allProducts)
+				]);
 			} catch (e) {
-				error = e instanceof Error ? e.message : 'Failed to fetch products';
+				// If offline or API fails, try to load from cache
+				if (!isOnline()) {
+					try {
+						const [cachedCats, cachedProducts] = await Promise.all([
+							categoriesDB.getAll(),
+							productsDB.getAll()
+						]);
+						categories = cachedCats.map(cat => ({
+							...cat,
+							products: cachedProducts.filter(p => p.store_category_id === cat.id)
+						})) as ProductCategory[];
+						error = null;
+					} catch {
+						error = 'Kunde inte ladda data offline';
+					}
+				} else {
+					error = e instanceof Error ? e.message : 'Failed to fetch products';
+				}
 			} finally {
 				loading = false;
 			}

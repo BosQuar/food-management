@@ -1,15 +1,41 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import '../app.css';
 	import { page } from '$app/stores';
-	import { ShoppingCart, Package, BookOpen } from '@lucide/svelte';
+	import { ShoppingCart, Package, BookOpen, WifiOff } from '@lucide/svelte';
+	import { initOfflineDB, isOnline } from '$lib/db/idb';
 
 	let { children } = $props();
+	let online = $state(true);
 
 	const navItems = [
 		{ href: '/', label: 'Inköpslista', icon: ShoppingCart },
 		{ href: '/products', label: 'Produkter', icon: Package },
 		{ href: '/recipes', label: 'Recept', icon: BookOpen }
 	];
+
+	onMount(async () => {
+		// Initialize IndexedDB
+		await initOfflineDB();
+
+		// Track online status
+		online = isOnline();
+		window.addEventListener('online', () => online = true);
+		window.addEventListener('offline', () => online = false);
+
+		// Register service worker
+		if (browser && 'serviceWorker' in navigator) {
+			try {
+				const registration = await navigator.serviceWorker.register('/service-worker.js', {
+					type: 'module'
+				});
+				console.log('Service Worker registered:', registration.scope);
+			} catch (err) {
+				console.error('Service Worker registration failed:', err);
+			}
+		}
+	});
 </script>
 
 <svelte:head>
@@ -18,6 +44,14 @@
 </svelte:head>
 
 <div class="flex min-h-screen flex-col bg-background">
+	<!-- Offline banner -->
+	{#if !online}
+		<div class="flex items-center justify-center gap-2 bg-yellow-500 px-4 py-2 text-sm text-white">
+			<WifiOff class="h-4 w-4" />
+			<span>Du är offline - ändringar synkas när du är online igen</span>
+		</div>
+	{/if}
+
 	<!-- Header for desktop -->
 	<header class="hidden border-b bg-card md:block">
 		<div class="container mx-auto flex h-14 items-center px-4">

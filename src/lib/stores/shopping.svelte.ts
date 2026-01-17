@@ -1,4 +1,5 @@
 import { shoppingApi, type ShoppingItem, type AddShoppingItem, type AddCustomItem } from '$lib/api';
+import { shoppingDB, isOnline } from '$lib/db/idb';
 
 let items = $state<ShoppingItem[]>([]);
 let loading = $state(false);
@@ -14,9 +15,24 @@ export function getShoppingStore() {
 			loading = true;
 			error = null;
 			try {
-				items = await shoppingApi.getAll();
+				// Try to fetch from API
+				const data = await shoppingApi.getAll();
+				items = data;
+				// Cache in IndexedDB
+				await shoppingDB.bulkReplace(data);
 			} catch (e) {
-				error = e instanceof Error ? e.message : 'Failed to fetch shopping list';
+				// If offline or API fails, try to load from cache
+				if (!isOnline()) {
+					try {
+						const cached = await shoppingDB.getAll();
+						items = cached as ShoppingItem[];
+						error = null;
+					} catch {
+						error = 'Kunde inte ladda data offline';
+					}
+				} else {
+					error = e instanceof Error ? e.message : 'Failed to fetch shopping list';
+				}
 			} finally {
 				loading = false;
 			}
