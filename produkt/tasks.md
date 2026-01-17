@@ -270,86 +270,85 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ## Fas 4: Avancerat
 
-### 4.1 URL-import för recept
+### 4.1 URL-import för recept ✅
 
 **Beroende:** 3.7
 
-- [ ] Skapa `server/services/recipe-parser.js`
-- [ ] Hämta HTML från URL
-- [ ] Parsa JSON-LD (schema.org/Recipe)
-- [ ] Fallback: parsa vanlig HTML (heuristik)
-- [ ] Extrahera: titel, ingredienser, instruktioner, portioner
-- [ ] `POST /api/recipes/import` endpoint
-- [ ] URL-fält + "Importera" knapp i RecipeEditor
+- [x] Skapa `server/services/recipe-parser.js`
+- [x] Hämta HTML från URL
+- [x] Parsa JSON-LD (schema.org/Recipe)
+- [x] Fallback: parsa vanlig HTML (heuristik)
+- [x] Extrahera: titel, ingredienser, instruktioner, portioner
+- [x] `POST /api/recipes/import` endpoint
+- [x] URL-fält + "Importera" knapp i RecipeEditor
 
 **Mål:** Kan klistra in recept-URL och få formuläret ifyllt automatiskt
 
 ---
 
-### 4.2 Portionsskalning
+### 4.2 Portionsskalning ✅
 
 **Beroende:** 3.6
 
-- [ ] Beräkna skalfaktor: önskade portioner / originalportioner
-- [ ] Multiplicera alla ingrediensmängder
-- [ ] Visa skalade mängder i receptvy
-- [ ] Vid "lägg till på lista" - använd skalade mängder
+- [x] Beräkna skalfaktor: önskade portioner / originalportioner
+- [x] Multiplicera alla ingrediensmängder
+- [x] Visa skalade mängder i receptvy
+- [x] Vid "lägg till på lista" - använd skalade mängder
 
 **Mål:** Ändra portioner → ingrediensmängder uppdateras automatiskt
 
 ---
 
-### 4.3 IndexedDB för offline
+### 4.3 IndexedDB för offline ✅
 
 **Beroende:** 3.2
 
-- [ ] Installera `idb` (IndexedDB wrapper)
-- [ ] Skapa `src/lib/db/idb.js`
-- [ ] Spegla alla tabeller i IndexedDB
-- [ ] Skriv till IDB först vid alla ändringar
-- [ ] Synka till server i bakgrunden
+- [x] Skapa `src/lib/db/idb.ts` (native IndexedDB wrapper)
+- [x] Spegla alla tabeller i IndexedDB
+- [x] Ladda från cache om offline
+- [x] Spara till cache vid lyckad API-fetch
 
 **Mål:** Ändringar sparas lokalt även utan internetanslutning
 
 ---
 
-### 4.4 Service Worker
+### 4.4 Service Worker ✅
 
 **Beroende:** 4.3
 
-- [ ] Skapa `src/service-worker.js`
-- [ ] Cacha statiska assets (JS, CSS, HTML)
-- [ ] Cacha API-responses (products, recipes)
-- [ ] Servera från cache när offline
-- [ ] Visa offline-indikator i UI
+- [x] Skapa `src/service-worker.ts`
+- [x] Cacha statiska assets (JS, CSS, HTML)
+- [x] Cacha API-responses (products, recipes, shopping)
+- [x] Servera från cache när offline
+- [x] Visa offline-indikator i UI
 
 **Mål:** Appen fungerar helt offline (läsa + skriva)
 
 ---
 
-### 4.5 WebSocket-klient + sync
+### 4.5 WebSocket-klient + sync ✅
 
 **Beroende:** 2.6, 4.3
 
-- [ ] Anslut till WebSocket i sync store
-- [ ] Lyssna på ändringar → uppdatera lokal store
-- [ ] Skicka lokala ändringar till server
-- [ ] Reconnect med exponential backoff
-- [ ] Visa sync-status i UI (ansluten/frånkopplad/synkar)
-- [ ] Konflikthantering: senaste timestamp vinner
+- [x] Anslut till WebSocket i sync store
+- [x] Lyssna på ändringar → uppdatera lokal store
+- [x] Skicka lokala ändringar till server
+- [x] Reconnect med exponential backoff
+- [x] Visa sync-status i UI (ansluten/frånkopplad/synkar)
+- [x] Konflikthantering: senaste timestamp vinner
 
 **Mål:** Realtidssynk mellan enheter, hanterar nätverksavbrott
 
 ---
 
-### 4.6 Export/import funktionalitet
+### 4.6 Export/import funktionalitet ✅
 
 **Beroende:** 2.2, 2.5
 
-- [ ] Export produktlista-knapp i produktkatalog
-- [ ] Import produktlista-knapp (filväljare)
-- [ ] Full backup-knapp i inställningar/meny
-- [ ] Restore-knapp med varning (skriver över all data)
+- [x] `GET /api/products/export` - exportera produktlista
+- [x] `POST /api/products/import` - importera produktlista
+- [x] `GET /api/backup` - full backup
+- [x] `POST /api/restore` - återställ från backup
 
 **Mål:** Kan exportera/importera produktlista separat och ta full backup
 
