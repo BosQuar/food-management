@@ -135,16 +135,16 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 2.6 WebSocket för realtidssynk
+### 2.6 WebSocket för realtidssynk ✅
 
 **Beroende:** 2.1
 
-- [ ] Installera `ws`
-- [ ] Skapa `server/services/sync.js`
-- [ ] Sätt upp WebSocket-server på `/ws`
-- [ ] Broadcast vid ändringar i shopping_items
-- [ ] Broadcast vid ändringar i products
-- [ ] Hantera reconnect från klienter
+- [x] Installera `ws`
+- [x] Skapa `server/services/sync.js`
+- [x] Sätt upp WebSocket-server på `/ws`
+- [x] Broadcast vid ändringar i shopping_items
+- [x] Broadcast vid ändringar i products
+- [x] Hantera reconnect från klienter
 
 **Mål:** Ändringar i en klient syns direkt i andra anslutna klienter
 

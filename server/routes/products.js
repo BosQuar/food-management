@@ -1,5 +1,6 @@
 import express from 'express';
 import { getDb } from '../db/connection.js';
+import { broadcastProductChange } from '../services/sync.js';
 
 const router = express.Router();
 
@@ -95,6 +96,7 @@ router.post('/', (req, res) => {
 
 	const product = db.prepare('SELECT * FROM products WHERE id = ?').get(result.lastInsertRowid);
 
+	broadcastProductChange('add', product);
 	res.status(201).json(product);
 });
 
@@ -122,6 +124,7 @@ router.put('/:id', (req, res) => {
 	);
 
 	const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+	broadcastProductChange('update', updated);
 	res.json(updated);
 });
 
@@ -137,6 +140,7 @@ router.delete('/:id', (req, res) => {
 
 	db.prepare('DELETE FROM products WHERE id = ?').run(id);
 
+	broadcastProductChange('delete', { id: parseInt(id) });
 	res.json({ message: 'Product deleted', id: parseInt(id) });
 });
 

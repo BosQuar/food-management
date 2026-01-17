@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getDb, closeDb } from './db/connection.js';
 import { seed } from './db/seed.js';
+import { setupWebSocket } from './services/sync.js';
 import productsRouter from './routes/products.js';
 import shoppingRouter from './routes/shopping.js';
 import recipesRouter from './routes/recipes.js';
@@ -50,6 +51,9 @@ if (process.env.NODE_ENV === 'production') {
 const server = app.listen(PORT, () => {
 	console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// Setup WebSocket
+setupWebSocket(server);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

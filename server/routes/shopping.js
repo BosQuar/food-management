@@ -1,5 +1,6 @@
 import express from 'express';
 import { getDb } from '../db/connection.js';
+import { broadcastShoppingChange } from '../services/sync.js';
 
 const router = express.Router();
 
@@ -50,6 +51,7 @@ router.post('/', (req, res) => {
 		WHERE si.id = ?
 	`).get(result.lastInsertRowid);
 
+	broadcastShoppingChange('add', item);
 	res.status(201).json(item);
 });
 
@@ -74,6 +76,7 @@ router.post('/custom', (req, res) => {
 		WHERE si.id = ?
 	`).get(result.lastInsertRowid);
 
+	broadcastShoppingChange('add', item);
 	res.status(201).json(item);
 });
 
@@ -108,6 +111,7 @@ router.put('/:id', (req, res) => {
 		WHERE si.id = ?
 	`).get(id);
 
+	broadcastShoppingChange('update', item);
 	res.json(item);
 });
 
@@ -123,6 +127,7 @@ router.delete('/:id', (req, res) => {
 
 	db.prepare('DELETE FROM shopping_items WHERE id = ?').run(id);
 
+	broadcastShoppingChange('delete', { id: parseInt(id) });
 	res.json({ message: 'Shopping item deleted', id: parseInt(id) });
 });
 
@@ -132,6 +137,7 @@ router.post('/reset', (req, res) => {
 
 	const result = db.prepare('DELETE FROM shopping_items').run();
 
+	broadcastShoppingChange('reset', { itemsDeleted: result.changes });
 	res.json({ message: 'Shopping list cleared', itemsDeleted: result.changes });
 });
 
