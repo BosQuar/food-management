@@ -1,7 +1,14 @@
 import { shoppingStore } from "./shopping.svelte";
 import { productsStore } from "./products.svelte";
+import { browser } from "$app/environment";
 
 type SyncStatus = "disconnected" | "connecting" | "connected";
+
+function getWebSocketUrl(): string {
+  if (!browser) return "";
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}/ws`;
+}
 
 let status = $state<SyncStatus>("disconnected");
 let ws: WebSocket | null = null;
@@ -26,7 +33,7 @@ export function getSyncStore() {
       status = "connecting";
 
       try {
-        ws = new WebSocket("ws://localhost:8500/ws");
+        ws = new WebSocket(getWebSocketUrl());
 
         ws.onopen = () => {
           status = "connected";

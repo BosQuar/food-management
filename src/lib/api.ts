@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8500/api";
+const API_BASE = "/api";
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
