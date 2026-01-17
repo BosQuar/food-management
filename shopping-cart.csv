@@ -1,0 +1,117 @@
+﻿Namn,Kategori,Enhet
+Tandkräm,1. Hygien,st
+Tops,1. Hygien,st
+Deo S,1. Hygien,st
+Deo O,1. Hygien,st
+Handtvål,1. Hygien,st
+Schampo,1. Hygien,st
+Duschtvål,1. Hygien,st
+Majskrokar ,2. Barnsaker,frp
+Tvättlappar,2. Barnsaker,st
+Klämmisar,2. Barnsaker,st
+Våtservetter,2. Barnsaker,frp
+Barnmat,2. Barnsaker,st
+Blöjjor,2. Barnsaker,frp
+Gofika,3. Bröd/Kakor,st
+Kaffefilter,3. Bröd/Kakor,st
+Korvbröd,3. Bröd/Kakor,frp
+Te,3. Bröd/Kakor,frp
+Kaffe,3. Bröd/Kakor,frp
+Saft,3. Bröd/Kakor,st
+Hamburgerbröd,3. Bröd/Kakor,frp
+Bröd,3. Bröd/Kakor,frp
+Blandfärs,4. Ost/Kött,frp
+Salladsost i olja,4. Ost/Kött,st
+Pizzakit,4. Ost/Kött,st
+Potatissallad ,4. Ost/Kött,st
+Sill,4. Ost/Kött,st
+Korv,4. Ost/Kött,frp
+Mozzarella,4. Ost/Kött,st
+Halloumi,4. Ost/Kött,st
+Skinka,4. Ost/Kött,frp
+Ost,4. Ost/Kött,st
+Fiskbuljong ,5. Kryddor/Oljor,frp
+Grönskaksbuljong,5. Kryddor/Oljor,frp
+Olivolja,5. Kryddor/Oljor,st
+Rapsolja,5. Kryddor/Oljor,st
+Kvarg,6. Mejeri/Ägg,g
+Baksmör,6. Mejeri/Ägg,g
+Svennes kaviar,6. Mejeri/Ägg,st
+Steksmör,6. Mejeri/Ägg,st
+Grädde,6. Mejeri/Ägg,dl
+Creme fraiche ,6. Mejeri/Ägg,dl
+Matlagningsgrädde,6. Mejeri/Ägg,dl
+Yoghurt,6. Mejeri/Ägg,l
+Havredryck,6. Mejeri/Ägg,l
+Ägg,6. Mejeri/Ägg,st
+Smör ,6. Mejeri/Ägg,g
+Mjölk,6. Mejeri/Ägg,l
+Fil,6. Mejeri/Ägg,l
+Avokado,7. Frukt/Grönt,st
+Spenat,7. Frukt/Grönt,frp
+Purjolök,7. Frukt/Grönt,st
+Päron,7. Frukt/Grönt,st
+Zuccini,7. Frukt/Grönt,st
+Sötpotatis,7. Frukt/Grönt,kg
+Isbergssallad,7. Frukt/Grönt,st
+Gurka,7. Frukt/Grönt,st
+Vitlök,7. Frukt/Grönt,st
+Morötter,7. Frukt/Grönt,kg
+Citron,7. Frukt/Grönt,st
+Banan,7. Frukt/Grönt,st
+Lök,7. Frukt/Grönt,st
+Paprika,7. Frukt/Grönt,st
+Potatis,7. Frukt/Grönt,kg
+Tomater,7. Frukt/Grönt,st
+Clementin,7. Frukt/Grönt,st
+Äpple,7. Frukt/Grönt,st
+Quinoa,8 Torrvaror/Konserver,frp
+Senap,8 Torrvaror/Konserver,st
+Lasagneplattor,8 Torrvaror/Konserver,frp
+Socker,8 Torrvaror/Konserver,frp
+Mjöl,8 Torrvaror/Konserver,frp
+Remouladsås ,8 Torrvaror/Konserver,st
+Tomatpuré,8 Torrvaror/Konserver,st
+Naan bröd,8 Torrvaror/Konserver,frp
+Mandlar,8 Torrvaror/Konserver,frp
+Plastpåsar,8 Torrvaror/Konserver,st
+Krossade tomater,8 Torrvaror/Konserver,frp
+Pumpakärnor ,8 Torrvaror/Konserver,frp
+Solrosfrön,8 Torrvaror/Konserver,frp
+Tonfisk i vatten,8 Torrvaror/Konserver,st
+Sweet chili,8 Torrvaror/Konserver,st
+Linser ,8 Torrvaror/Konserver,frp
+Pesto grön,8 Torrvaror/Konserver,st
+Pasta,8 Torrvaror/Konserver,st
+Bönor,8 Torrvaror/Konserver,st
+Sylt,8 Torrvaror/Konserver,st
+Havregryn,8 Torrvaror/Konserver,frp
+Ris,8 Torrvaror/Konserver,frp
+Start,8 Torrvaror/Konserver,st
+Ärtor,9. Frysvaror/Tacos,frp
+Dill fryst,9. Frysvaror/Tacos,st
+Fiskpanetter,9. Frysvaror/Tacos,frp
+Potatisbullar,9. Frysvaror/Tacos,frp
+Persilja fryst,9. Frysvaror/Tacos,st
+Köttbullar,9. Frysvaror/Tacos,kg
+Vegofärs,9. Frysvaror/Tacos,kg
+Nachos,9. Frysvaror/Tacos,frp
+Tacosås,9. Frysvaror/Tacos,st
+Tacobröd,9. Frysvaror/Tacos,frp
+Fryspizza,9. Frysvaror/Tacos,st
+Spenat,9. Frysvaror/Tacos,frp
+Broccolie,9. Frysvaror/Tacos,frp
+Chicken nuggets,9. Frysvaror/Tacos,frp
+Majs ,9. Frysvaror/Tacos,frp
+Lax,9. Frysvaror/Tacos,g
+Vit fisk,9. Frysvaror/Tacos,g
+Kaffebryggare rengöring ,10. Hushållsartiklar,st
+Fönsterputs,10. Hushållsartiklar,st
+Diskmedel,10. Hushållsartiklar,st
+Diskmedelstabletter,10. Hushållsartiklar,frp
+Hushållspapper,10. Hushållsartiklar,frp
+Toalettpapper,10. Hushållsartiklar,frp
+Tvättmedel,10. Hushållsartiklar,st
+Mango,11. Snacks/Bär,frp
+Hallon,11. Snacks/Bär,frp
+Blåbär,11. Snacks/Bär,frp
