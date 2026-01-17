@@ -84,6 +84,15 @@
 		}
 	}
 
+	function moveIngredient(index: number, direction: 'up' | 'down') {
+		const newIndex = direction === 'up' ? index - 1 : index + 1;
+		if (newIndex < 0 || newIndex >= ingredients.length) return;
+
+		const newIngredients = [...ingredients];
+		[newIngredients[index], newIngredients[newIndex]] = [newIngredients[newIndex], newIngredients[index]];
+		ingredients = newIngredients;
+	}
+
 	function handleSave() {
 		const validIngredients = ingredients
 			.filter(i => i.product_id || i.custom_name)
@@ -165,6 +174,10 @@
 					{products}
 					onchange={(data) => updateIngredient(index, data)}
 					onremove={() => removeIngredient(index)}
+					onmoveup={() => moveIngredient(index, 'up')}
+					onmovedown={() => moveIngredient(index, 'down')}
+					isFirst={index === 0}
+					isLast={index === ingredients.length - 1}
 				/>
 			{/each}
 		</CardContent>

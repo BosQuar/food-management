@@ -2,7 +2,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import * as Select from '$lib/components/ui/select';
-	import { Trash2 } from '@lucide/svelte';
+	import { Trash2, ChevronUp, ChevronDown } from '@lucide/svelte';
 	import type { Product } from '$lib/api';
 
 	interface Ingredient {
@@ -17,9 +17,13 @@
 		products: Product[];
 		onchange: (ingredient: Ingredient) => void;
 		onremove: () => void;
+		onmoveup?: () => void;
+		onmovedown?: () => void;
+		isFirst?: boolean;
+		isLast?: boolean;
 	}
 
-	let { ingredient, products, onchange, onremove }: Props = $props();
+	let { ingredient, products, onchange, onremove, onmoveup, onmovedown, isFirst = false, isLast = false }: Props = $props();
 
 	let useCustom = $state(!ingredient.product_id);
 	let selectedProductId = $state(ingredient.product_id?.toString() || '');
@@ -124,6 +128,27 @@
 				class="w-20"
 			/>
 		</div>
+	</div>
+
+	<div class="flex flex-col gap-0.5">
+		<Button
+			variant="ghost"
+			size="icon"
+			class="h-6 w-6 text-muted-foreground"
+			onclick={onmoveup}
+			disabled={isFirst}
+		>
+			<ChevronUp class="h-4 w-4" />
+		</Button>
+		<Button
+			variant="ghost"
+			size="icon"
+			class="h-6 w-6 text-muted-foreground"
+			onclick={onmovedown}
+			disabled={isLast}
+		>
+			<ChevronDown class="h-4 w-4" />
+		</Button>
 	</div>
 
 	<Button variant="ghost" size="icon" class="text-muted-foreground hover:text-destructive" onclick={onremove}>
