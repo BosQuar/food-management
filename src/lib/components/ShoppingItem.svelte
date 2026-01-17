@@ -27,12 +27,16 @@
 		<p class="text-sm font-medium {isDone ? 'line-through text-muted-foreground' : ''}">
 			{displayName}
 		</p>
-		<p class="text-xs text-muted-foreground">
-			{item.quantity} {item.unit}
-			{#if item.notes}
-				<span class="ml-2 italic">({item.notes})</span>
-			{/if}
-		</p>
+		{#if item.quantity !== null || item.notes}
+			<p class="text-xs text-muted-foreground">
+				{#if item.quantity !== null}
+					{item.quantity} {item.unit}
+				{/if}
+				{#if item.notes}
+					<span class="{item.quantity !== null ? 'ml-2' : ''} italic">({item.notes})</span>
+				{/if}
+			</p>
+		{/if}
 	</div>
 
 	<Button

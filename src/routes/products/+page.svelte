@@ -4,22 +4,23 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import * as Select from '$lib/components/ui/select';
 	import { productsStore } from '$lib/stores/products.svelte';
 	import { shoppingStore } from '$lib/stores/shopping.svelte';
 	import ProductList from '$lib/components/ProductList.svelte';
-	import { Plus, Search } from '@lucide/svelte';
+	import { Plus, Search, Settings } from '@lucide/svelte';
 	import type { Product } from '$lib/api';
 
 	let searchQuery = $state('');
+	let editMode = $state(false);
 	let showAddDialog = $state(false);
-	let showAddToListDialog = $state(false);
 	let showEditDialog = $state(false);
 	let showDeleteDialog = $state(false);
+	let showOverwriteDialog = $state(false);
 
 	let selectedProduct = $state<Product | null>(null);
-	let quantity = $state(1);
-	let unit = $state('st');
+	let pendingAdd = $state<{ product: Product; quantity: number | null; unit: string } | null>(null);
 
 	let newProductName = $state('');
 	let newProductUnit = $state('st');
@@ -31,25 +32,52 @@
 
 	onMount(() => {
 		productsStore.fetch();
+		shoppingStore.fetch();
 	});
 
-	function openAddToListDialog(product: Product) {
-		selectedProduct = product;
-		quantity = 1;
-		unit = product.default_unit;
-		showAddToListDialog = true;
+	async function handleAddToList(product: Product, quantity: number | null, unit: string) {
+		// Check if product already exists in shopping list
+		const existing = shoppingStore.items.find(
+			item => item.product_id === product.id && !item.is_done
+		);
+
+		if (existing) {
+			// Product exists
+			if (quantity === null && existing.quantity !== null) {
+				// Trying to add without quantity when item has quantity - show warning
+				pendingAdd = { product, quantity, unit };
+				showOverwriteDialog = true;
+				return;
+			} else if (quantity === null && existing.quantity === null) {
+				// Both without quantity - do nothing (already in list)
+				return;
+			}
+			// Has quantity - will be handled by backend (add to existing)
+		}
+
+		await doAddToList(product, quantity, unit);
 	}
 
-	async function handleAddToList() {
-		if (selectedProduct) {
-			await shoppingStore.add({
-				product_id: selectedProduct.id,
-				quantity,
-				unit
-			});
-			showAddToListDialog = false;
-			selectedProduct = null;
+	async function doAddToList(product: Product, quantity: number | null, unit: string) {
+		await shoppingStore.add({
+			product_id: product.id,
+			quantity,
+			unit
+		});
+	}
+
+	async function handleOverwriteConfirm() {
+		if (pendingAdd) {
+			// User wants to overwrite - set quantity to null
+			const existing = shoppingStore.items.find(
+				item => item.product_id === pendingAdd.product.id && !item.is_done
+			);
+			if (existing) {
+				await shoppingStore.update(existing.id, { quantity: null, unit: null });
+			}
 		}
+		showOverwriteDialog = false;
+		pendingAdd = null;
 	}
 
 	function openEditDialog(product: Product) {
@@ -104,48 +132,61 @@
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold">Produkter</h1>
 
-		<Dialog.Root bind:open={showAddDialog}>
-			<Dialog.Trigger>
-				{#snippet child({ props })}
-					<Button size="sm" {...props}>
-						<Plus class="h-4 w-4 mr-2" />
-						Ny produkt
-					</Button>
-				{/snippet}
-			</Dialog.Trigger>
-			<Dialog.Content>
-				<Dialog.Header>
-					<Dialog.Title>Lägg till produkt</Dialog.Title>
-				</Dialog.Header>
-				<div class="space-y-4 py-4">
-					<div class="space-y-2">
-						<Label for="name">Namn</Label>
-						<Input id="name" bind:value={newProductName} placeholder="T.ex. Mjölk" />
-					</div>
-					<div class="space-y-2">
-						<Label for="unit">Standardenhet</Label>
-						<Input id="unit" bind:value={newProductUnit} placeholder="st, kg, l..." />
-					</div>
-					<div class="space-y-2">
-						<Label>Kategori</Label>
-						<Select.Root type="single" bind:value={newProductCategory}>
-							<Select.Trigger class="w-full">
-								{categories.find(c => c.value === newProductCategory)?.label || 'Välj kategori'}
-							</Select.Trigger>
-							<Select.Content>
-								{#each categories as cat}
-									<Select.Item value={cat.value}>{cat.label}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</div>
-				</div>
-				<Dialog.Footer>
-					<Button variant="outline" onclick={() => showAddDialog = false}>Avbryt</Button>
-					<Button onclick={handleCreateProduct} disabled={!newProductName.trim()}>Lägg till</Button>
-				</Dialog.Footer>
-			</Dialog.Content>
-		</Dialog.Root>
+		<div class="flex gap-2">
+			<Button
+				variant={editMode ? "default" : "outline"}
+				size="sm"
+				onclick={() => editMode = !editMode}
+			>
+				<Settings class="h-4 w-4 mr-2" />
+				{editMode ? 'Klar' : 'Redigera'}
+			</Button>
+
+			{#if editMode}
+				<Dialog.Root bind:open={showAddDialog}>
+					<Dialog.Trigger>
+						{#snippet child({ props })}
+							<Button size="sm" {...props}>
+								<Plus class="h-4 w-4 mr-2" />
+								Ny produkt
+							</Button>
+						{/snippet}
+					</Dialog.Trigger>
+					<Dialog.Content>
+						<Dialog.Header>
+							<Dialog.Title>Lägg till produkt</Dialog.Title>
+						</Dialog.Header>
+						<div class="space-y-4 py-4">
+							<div class="space-y-2">
+								<Label for="name">Namn</Label>
+								<Input id="name" bind:value={newProductName} placeholder="T.ex. Mjölk" />
+							</div>
+							<div class="space-y-2">
+								<Label for="unit">Standardenhet</Label>
+								<Input id="unit" bind:value={newProductUnit} placeholder="st, kg, l..." />
+							</div>
+							<div class="space-y-2">
+								<Label>Kategori</Label>
+								<Select.Root type="single" bind:value={newProductCategory}>
+									<Select.Trigger class="w-full">
+										{categories.find(c => c.value === newProductCategory)?.label || 'Välj kategori'}
+									</Select.Trigger>
+									<Select.Content>
+										{#each categories as cat}
+											<Select.Item value={cat.value}>{cat.label}</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+							</div>
+						</div>
+						<Dialog.Footer>
+							<Button variant="outline" onclick={() => showAddDialog = false}>Avbryt</Button>
+							<Button onclick={handleCreateProduct} disabled={!newProductName.trim()}>Lägg till</Button>
+						</Dialog.Footer>
+					</Dialog.Content>
+				</Dialog.Root>
+			{/if}
+		</div>
 	</div>
 
 	<div class="relative">
@@ -172,38 +213,33 @@
 		<ProductList
 			categories={productsStore.categories}
 			{searchQuery}
-			onAddToList={openAddToListDialog}
+			{editMode}
+			onAddToList={handleAddToList}
 			onEdit={openEditDialog}
 			onDelete={openDeleteDialog}
 		/>
 	{/if}
 </div>
 
-<!-- Add to list dialog -->
-<Dialog.Root bind:open={showAddToListDialog}>
-	<Dialog.Content>
-		<Dialog.Header>
-			<Dialog.Title>Lägg till på listan</Dialog.Title>
-			<Dialog.Description>{selectedProduct?.name}</Dialog.Description>
-		</Dialog.Header>
-		<div class="space-y-4 py-4">
-			<div class="grid grid-cols-2 gap-4">
-				<div class="space-y-2">
-					<Label for="quantity">Antal</Label>
-					<Input id="quantity" type="number" min="0.1" step="0.1" bind:value={quantity} />
-				</div>
-				<div class="space-y-2">
-					<Label for="unit">Enhet</Label>
-					<Input id="unit" bind:value={unit} />
-				</div>
-			</div>
-		</div>
-		<Dialog.Footer>
-			<Button variant="outline" onclick={() => showAddToListDialog = false}>Avbryt</Button>
-			<Button onclick={handleAddToList}>Lägg till</Button>
-		</Dialog.Footer>
-	</Dialog.Content>
-</Dialog.Root>
+<!-- Overwrite quantity warning dialog -->
+<AlertDialog.Root bind:open={showOverwriteDialog}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Skriv över kvantitet?</AlertDialog.Title>
+			<AlertDialog.Description>
+				"{pendingAdd?.product.name}" finns redan på listan med en kvantitet. Vill du ta bort kvantiteten?
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel onclick={() => { showOverwriteDialog = false; pendingAdd = null; }}>
+				Avbryt
+			</AlertDialog.Cancel>
+			<AlertDialog.Action onclick={handleOverwriteConfirm}>
+				Ta bort kvantitet
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
 
 <!-- Edit dialog -->
 <Dialog.Root bind:open={showEditDialog}>

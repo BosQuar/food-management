@@ -124,8 +124,8 @@ export interface ShoppingItem {
 
 export interface AddShoppingItem {
 	product_id: number;
-	quantity?: number;
-	unit?: string;
+	quantity?: number | null;
+	unit?: string | null;
 	notes?: string;
 }
 

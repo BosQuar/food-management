@@ -1,21 +1,26 @@
 <script lang="ts">
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	import { Plus, Pencil, Trash2, ChevronDown, ChevronRight } from '@lucide/svelte';
 	import type { ProductCategory, Product } from '$lib/api';
 
 	interface Props {
 		categories: ProductCategory[];
 		searchQuery: string;
-		onAddToList: (product: Product) => void;
+		editMode: boolean;
+		onAddToList: (product: Product, quantity: number | null, unit: string) => void;
 		onEdit: (product: Product) => void;
 		onDelete: (product: Product) => void;
 	}
 
-	let { categories, searchQuery, onAddToList, onEdit, onDelete }: Props = $props();
+	let { categories, searchQuery, editMode, onAddToList, onEdit, onDelete }: Props = $props();
 
 	// Track collapsed categories by ID
 	let collapsedCategories = $state<Set<number>>(new Set());
+
+	// Track quantity input per product
+	let quantities = $state<Record<number, string>>({});
 
 	function toggleCategory(categoryId: number) {
 		if (collapsedCategories.has(categoryId)) {
@@ -24,6 +29,14 @@
 			collapsedCategories.add(categoryId);
 		}
 		collapsedCategories = new Set(collapsedCategories);
+	}
+
+	function handleAdd(product: Product) {
+		const qtyStr = quantities[product.id] || '';
+		const qty = qtyStr.trim() ? parseFloat(qtyStr) : null;
+		onAddToList(product, qty, product.default_unit);
+		// Clear the quantity input after adding
+		quantities[product.id] = '';
 	}
 
 	const filteredCategories = $derived(() => {
@@ -71,32 +84,51 @@
 						<div class="divide-y">
 							{#each category.products as product (product.id)}
 								<div class="flex items-center gap-2 py-2">
-									<button
-										type="button"
-										class="flex-1 text-left hover:bg-accent rounded-md px-2 py-1 -mx-2 transition-colors"
-										onclick={() => onAddToList(product)}
-									>
-										<p class="text-sm font-medium">{product.name}</p>
+									<div class="flex-1 min-w-0">
+										<p class="text-sm font-medium truncate">{product.name}</p>
 										<p class="text-xs text-muted-foreground">{product.default_unit}</p>
-									</button>
+									</div>
 
-									<Button
-										variant="ghost"
-										size="icon"
-										class="h-8 w-8"
-										onclick={() => onEdit(product)}
-									>
-										<Pencil class="h-4 w-4" />
-									</Button>
+									{#if editMode}
+										<!-- Edit mode: show edit/delete buttons -->
+										<Button
+											variant="ghost"
+											size="icon"
+											class="h-8 w-8 shrink-0"
+											onclick={() => onEdit(product)}
+										>
+											<Pencil class="h-4 w-4" />
+										</Button>
 
-									<Button
-										variant="ghost"
-										size="icon"
-										class="h-8 w-8 text-muted-foreground hover:text-destructive"
-										onclick={() => onDelete(product)}
-									>
-										<Trash2 class="h-4 w-4" />
-									</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											class="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+											onclick={() => onDelete(product)}
+										>
+											<Trash2 class="h-4 w-4" />
+										</Button>
+									{:else}
+										<!-- Add mode: show quantity input and add button -->
+										<Input
+											type="number"
+											min="0.1"
+											step="0.1"
+											placeholder=""
+											class="w-16 h-8 text-sm text-center"
+											bind:value={quantities[product.id]}
+											onkeydown={(e) => e.key === 'Enter' && handleAdd(product)}
+										/>
+
+										<Button
+											variant="ghost"
+											size="icon"
+											class="h-8 w-8 shrink-0 text-primary hover:text-primary hover:bg-primary/10"
+											onclick={() => handleAdd(product)}
+										>
+											<Plus class="h-4 w-4" />
+										</Button>
+									{/if}
 								</div>
 							{/each}
 						</div>

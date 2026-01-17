@@ -26,6 +26,7 @@ router.get('/', (req, res) => {
 
 // POST /api/shopping - lägg till produkt (med product_id)
 // Om produkten redan finns i listan, uppdatera kvantiteten istället
+// quantity kan vara null för "utan kvantitet"
 router.post('/', (req, res) => {
 	const db = getDb();
 	const { product_id, quantity, unit, notes } = req.body;
@@ -39,24 +40,36 @@ router.post('/', (req, res) => {
 		return res.status(404).json({ error: 'Product not found' });
 	}
 
-	const effectiveUnit = unit || product.default_unit;
-	const effectiveQuantity = quantity || 1;
+	// Check if quantity is provided (not null/undefined)
+	const hasQuantity = quantity !== null && quantity !== undefined;
+	const effectiveQuantity = hasQuantity ? quantity : null;
+	const effectiveUnit = hasQuantity ? (unit || product.default_unit) : null;
 
-	// Check if product already exists in shopping list with same unit
+	// Check if product already exists in shopping list (not done)
 	const existing = db.prepare(`
 		SELECT * FROM shopping_items
-		WHERE product_id = ? AND unit = ? AND is_done = 0
-	`).get(product_id, effectiveUnit);
+		WHERE product_id = ? AND is_done = 0
+	`).get(product_id);
 
 	let item;
 	if (existing) {
-		// Update quantity
-		const newQuantity = existing.quantity + effectiveQuantity;
-		db.prepare(`
-			UPDATE shopping_items
-			SET quantity = ?, updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?
-		`).run(newQuantity, existing.id);
+		if (hasQuantity && existing.quantity !== null) {
+			// Both have quantity - add to existing
+			const newQuantity = existing.quantity + effectiveQuantity;
+			db.prepare(`
+				UPDATE shopping_items
+				SET quantity = ?, unit = ?, updated_at = CURRENT_TIMESTAMP
+				WHERE id = ?
+			`).run(newQuantity, effectiveUnit, existing.id);
+		} else if (hasQuantity && existing.quantity === null) {
+			// New has quantity, existing doesn't - update to have quantity
+			db.prepare(`
+				UPDATE shopping_items
+				SET quantity = ?, unit = ?, updated_at = CURRENT_TIMESTAMP
+				WHERE id = ?
+			`).run(effectiveQuantity, effectiveUnit, existing.id);
+		}
+		// If no quantity on new and existing has quantity/no quantity - do nothing (handled by frontend)
 
 		item = db.prepare(`
 			SELECT si.*, p.name as product_name, sc.name as category_name
