@@ -168,15 +168,15 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 3.2 Svelte stores
+### 3.2 Svelte stores ✅
 
 **Beroende:** 3.1
 
-- [ ] Skapa `src/lib/stores/products.js` - products, categories
-- [ ] Skapa `src/lib/stores/shopping.js` - shoppingItems
-- [ ] Skapa `src/lib/stores/recipes.js` - recipes
-- [ ] Skapa `src/lib/stores/sync.js` - syncStatus (connected, pending)
-- [ ] Funktioner för att hämta/uppdatera via API
+- [x] Skapa `src/lib/stores/products.js` - products, categories
+- [x] Skapa `src/lib/stores/shopping.js` - shoppingItems
+- [x] Skapa `src/lib/stores/recipes.js` - recipes
+- [x] Skapa `src/lib/stores/sync.js` - syncStatus (connected, pending)
+- [x] Funktioner för att hämta/uppdatera via API
 
 **Mål:** Stores hämtar data från backend och uppdaterar UI reaktivt
 
