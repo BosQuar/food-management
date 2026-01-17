@@ -108,17 +108,17 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 2.4 API routes - Recept
+### 2.4 API routes - Recept ✅
 
 **Beroende:** 2.1, 2.2
 
-- [ ] Skapa `server/routes/recipes.js`
-- [ ] `GET /api/recipes` - lista alla
-- [ ] `GET /api/recipes/:id` - hämta ett med ingredienser
-- [ ] `POST /api/recipes` - skapa med ingredienser
-- [ ] `PUT /api/recipes/:id` - uppdatera recept + ingredienser
-- [ ] `DELETE /api/recipes/:id` - ta bort (CASCADE på ingredienser)
-- [ ] `POST /api/recipes/:id/to-shopping` - lägg ingredienser på listan
+- [x] Skapa `server/routes/recipes.js`
+- [x] `GET /api/recipes` - lista alla
+- [x] `GET /api/recipes/:id` - hämta ett med ingredienser
+- [x] `POST /api/recipes` - skapa med ingredienser
+- [x] `PUT /api/recipes/:id` - uppdatera recept + ingredienser
+- [x] `DELETE /api/recipes/:id` - ta bort (CASCADE på ingredienser)
+- [x] `POST /api/recipes/:id/to-shopping` - lägg ingredienser på listan
 
 **Mål:** Kan skapa recept och lägga dess ingredienser på inköpslistan
 

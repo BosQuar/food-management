@@ -1,5 +1,11 @@
 {
   "permissions": {
-    "allow": ["Bash(npm *)", "Bash(npx *)", "Bash(node *)"]
+    "allow": [
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
   }
 }
