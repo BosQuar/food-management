@@ -5,8 +5,10 @@
     CardHeader,
     CardTitle,
   } from "$lib/components/ui/card";
-  import { ChevronDown, ChevronRight, ChevronsUpDown } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button";
+  import { Textarea } from "$lib/components/ui/textarea";
+  import * as Dialog from "$lib/components/ui/dialog";
+  import { ChevronDown, ChevronRight, ChevronsUpDown } from "@lucide/svelte";
   import ShoppingItem from "./ShoppingItem.svelte";
   import type { ShoppingItem as ShoppingItemType } from "$lib/api";
   import { uiStore } from "$lib/stores/ui.svelte";
@@ -15,12 +17,48 @@
     groupedItems: [string, ShoppingItemType[]][];
     onToggle: (id: number) => void;
     onDelete: (id: number) => void;
+    onUpdateNotes: (id: number, notes: string | null) => void;
   }
 
-  let { groupedItems, onToggle, onDelete }: Props = $props();
+  let { groupedItems, onToggle, onDelete, onUpdateNotes }: Props = $props();
 
   // Use store for collapsed categories (persists across route changes)
   const collapsedCategories = $derived(uiStore.shoppingCollapsed);
+
+  // Notes dialog
+  let showNotesDialog = $state(false);
+  let editingNotes = $state<{
+    shoppingItemId: number;
+    itemName: string;
+    notes: string;
+  } | null>(null);
+
+  function openNotesDialog(item: ShoppingItemType) {
+    const itemName = item.custom_name || item.product_name || "Okänd vara";
+    editingNotes = {
+      shoppingItemId: item.id,
+      itemName,
+      notes: item.notes || "",
+    };
+    showNotesDialog = true;
+  }
+
+  function handleSaveNotes() {
+    if (editingNotes) {
+      const notes = editingNotes.notes.trim() || null;
+      onUpdateNotes(editingNotes.shoppingItemId, notes);
+    }
+    showNotesDialog = false;
+    editingNotes = null;
+  }
+
+  function handleClearNotes() {
+    if (editingNotes) {
+      onUpdateNotes(editingNotes.shoppingItemId, null);
+    }
+    showNotesDialog = false;
+    editingNotes = null;
+  }
 
   function toggleCategory(categoryName: string) {
     uiStore.toggleShoppingCategory(categoryName);
@@ -79,7 +117,12 @@
           <CardContent class="pt-0 pb-2">
             <div class="divide-y">
               {#each items as item (item.id)}
-                <ShoppingItem {item} {onToggle} {onDelete} />
+                <ShoppingItem
+                  {item}
+                  {onToggle}
+                  {onDelete}
+                  onEditNotes={openNotesDialog}
+                />
               {/each}
             </div>
           </CardContent>
@@ -88,3 +131,46 @@
     {/each}
   </div>
 {/if}
+
+<!-- Notes dialog -->
+<Dialog.Root bind:open={showNotesDialog}>
+  <Dialog.Content class="max-w-sm">
+    <Dialog.Header>
+      <Dialog.Title>Anteckning</Dialog.Title>
+      <Dialog.Description>{editingNotes?.itemName}</Dialog.Description>
+    </Dialog.Header>
+    {#if editingNotes}
+      <div class="py-4">
+        <Textarea
+          placeholder="T.ex. Dove original..."
+          class="resize-none"
+          rows={3}
+          bind:value={editingNotes.notes}
+          onkeydown={(e) =>
+            e.key === "Enter" &&
+            !e.shiftKey &&
+            (e.preventDefault(), handleSaveNotes())}
+        />
+      </div>
+    {/if}
+    <Dialog.Footer class="flex-col sm:flex-row gap-2">
+      <Button
+        variant="ghost"
+        class="text-destructive hover:text-destructive sm:mr-auto"
+        onclick={handleClearNotes}
+      >
+        Rensa
+      </Button>
+      <Button
+        variant="outline"
+        onclick={() => {
+          showNotesDialog = false;
+          editingNotes = null;
+        }}
+      >
+        Avbryt
+      </Button>
+      <Button onclick={handleSaveNotes}>Spara</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>

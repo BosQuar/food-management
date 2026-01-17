@@ -27,6 +27,10 @@
     await shoppingStore.delete(id);
   }
 
+  async function handleUpdateNotes(id: number, notes: string | null) {
+    await shoppingStore.update(id, { notes });
+  }
+
   async function handleReset() {
     await shoppingStore.reset();
     showResetDialog = false;
@@ -114,6 +118,7 @@
       groupedItems={shoppingStore.groupedByCategory}
       onToggle={handleToggle}
       onDelete={handleDelete}
+      onUpdateNotes={handleUpdateNotes}
     />
   {/if}
 </div>

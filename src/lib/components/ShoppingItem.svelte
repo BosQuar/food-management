@@ -1,16 +1,17 @@
 <script lang="ts">
   import { Checkbox } from "$lib/components/ui/checkbox";
   import { Button } from "$lib/components/ui/button";
-  import { Trash2 } from "@lucide/svelte";
+  import { StickyNote, Trash2 } from "@lucide/svelte";
   import type { ShoppingItem } from "$lib/api";
 
   interface Props {
     item: ShoppingItem;
     onToggle: (id: number) => void;
     onDelete: (id: number) => void;
+    onEditNotes: (item: ShoppingItem) => void;
   }
 
-  let { item, onToggle, onDelete }: Props = $props();
+  let { item, onToggle, onDelete, onEditNotes }: Props = $props();
 
   const displayName = $derived(
     item.custom_name || item.product_name || "Okänd vara",
@@ -39,6 +40,15 @@
       </p>
     {/if}
   </div>
+
+  <Button
+    variant="ghost"
+    size="icon"
+    class="h-8 w-8 text-muted-foreground hover:text-foreground"
+    onclick={() => onEditNotes(item)}
+  >
+    <StickyNote class="h-4 w-4" />
+  </Button>
 
   <Button
     variant="ghost"

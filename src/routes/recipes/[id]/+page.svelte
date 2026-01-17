@@ -197,13 +197,7 @@
           <CardTitle class="text-base">Instruktioner</CardTitle>
         </CardHeader>
         <CardContent>
-          <div class="prose prose-sm max-w-none">
-            {#each recipe.instructions.split("\n") as paragraph}
-              {#if paragraph.trim()}
-                <p>{paragraph}</p>
-              {/if}
-            {/each}
-          </div>
+          <p class="text-sm whitespace-pre-line">{recipe.instructions}</p>
         </CardContent>
       </Card>
     {/if}
