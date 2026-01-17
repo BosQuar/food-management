@@ -356,15 +356,15 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ## Fas 5: Deploy
 
-### 5.1 PWA manifest
+### 5.1 PWA manifest ✅
 
 **Beroende:** 4.4
 
-- [ ] Skapa `static/manifest.json`
-- [ ] App-namn, ikoner (192x192, 512x512)
-- [ ] Theme color, background color
-- [ ] Display: standalone
-- [ ] Länka manifest i `app.html`
+- [x] Skapa `static/manifest.json`
+- [x] App-namn, ikoner (192x192, 512x512)
+- [x] Theme color, background color
+- [x] Display: standalone
+- [x] Länka manifest i `app.html`
 
 **Mål:** Appen kan installeras som PWA på mobil
 
