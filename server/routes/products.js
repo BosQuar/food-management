@@ -21,7 +21,7 @@ router.get("/", (req, res) => {
   const products = db
     .prepare(
       `
-		SELECT p.id, p.name, p.store_category_id, p.default_unit, p.default_notes, p.created_at
+		SELECT p.id, p.name, p.store_category_id, p.default_unit, p.default_notes, p.is_staple, p.created_at
 		FROM products p
 		ORDER BY p.name
 	`,
@@ -53,7 +53,7 @@ router.get("/export", (req, res) => {
   const products = db
     .prepare(
       `
-		SELECT id, name, store_category_id, default_unit, default_notes
+		SELECT id, name, store_category_id, default_unit, default_notes, is_staple
 		FROM products
 		ORDER BY name
 	`,
@@ -80,8 +80,8 @@ router.post("/import", (req, res) => {
 	`);
 
   const insertProduct = db.prepare(`
-		INSERT OR REPLACE INTO products (id, name, store_category_id, default_unit, default_notes)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT OR REPLACE INTO products (id, name, store_category_id, default_unit, default_notes, is_staple)
+		VALUES (?, ?, ?, ?, ?, ?)
 	`);
 
   const transaction = db.transaction(() => {
@@ -95,6 +95,7 @@ router.post("/import", (req, res) => {
         prod.store_category_id,
         prod.default_unit,
         prod.default_notes,
+        prod.is_staple || 0,
       );
     }
   });
@@ -111,7 +112,8 @@ router.post("/import", (req, res) => {
 // POST /api/products - skapa ny produkt
 router.post("/", (req, res) => {
   const db = getDb();
-  const { name, store_category_id, default_unit, default_notes } = req.body;
+  const { name, store_category_id, default_unit, default_notes, is_staple } =
+    req.body;
 
   if (!name) {
     return res.status(400).json({ error: "Name is required" });
@@ -120,8 +122,8 @@ router.post("/", (req, res) => {
   const result = db
     .prepare(
       `
-		INSERT INTO products (name, store_category_id, default_unit, default_notes)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO products (name, store_category_id, default_unit, default_notes, is_staple)
+		VALUES (?, ?, ?, ?, ?)
 	`,
     )
     .run(
@@ -129,6 +131,7 @@ router.post("/", (req, res) => {
       store_category_id || null,
       default_unit || "st",
       default_notes || null,
+      is_staple ? 1 : 0,
     );
 
   const product = db
@@ -143,24 +146,29 @@ router.post("/", (req, res) => {
 router.put("/:id", (req, res) => {
   const db = getDb();
   const { id } = req.params;
-  const { name, store_category_id, default_unit, default_notes } = req.body;
+  const body = req.body;
 
   const existing = db.prepare("SELECT * FROM products WHERE id = ?").get(id);
   if (!existing) {
     return res.status(404).json({ error: "Product not found" });
   }
 
+  // Use hasOwnProperty to check if is_staple was explicitly provided
+  const is_staple =
+    "is_staple" in body ? (body.is_staple ? 1 : 0) : existing.is_staple;
+
   db.prepare(
     `
 		UPDATE products
-		SET name = ?, store_category_id = ?, default_unit = ?, default_notes = ?
+		SET name = ?, store_category_id = ?, default_unit = ?, default_notes = ?, is_staple = ?
 		WHERE id = ?
 	`,
   ).run(
-    name ?? existing.name,
-    store_category_id ?? existing.store_category_id,
-    default_unit ?? existing.default_unit,
-    default_notes ?? existing.default_notes,
+    body.name ?? existing.name,
+    body.store_category_id ?? existing.store_category_id,
+    body.default_unit ?? existing.default_unit,
+    body.default_notes ?? existing.default_notes,
+    is_staple,
     id,
   );
 

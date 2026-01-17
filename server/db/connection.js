@@ -31,11 +31,19 @@ function initSchema() {
 
 function runMigrations() {
   // Migration: Add description column to recipes table
-  const columns = db.prepare("PRAGMA table_info(recipes)").all();
-  const hasDescription = columns.some((col) => col.name === "description");
+  const recipeColumns = db.prepare("PRAGMA table_info(recipes)").all();
+  const hasDescription = recipeColumns.some((col) => col.name === "description");
   if (!hasDescription) {
     db.exec("ALTER TABLE recipes ADD COLUMN description TEXT");
     console.log("Migration: Added description column to recipes table");
+  }
+
+  // Migration: Add is_staple column to products table
+  const productColumns = db.prepare("PRAGMA table_info(products)").all();
+  const hasIsStaple = productColumns.some((col) => col.name === "is_staple");
+  if (!hasIsStaple) {
+    db.exec("ALTER TABLE products ADD COLUMN is_staple BOOLEAN DEFAULT 0");
+    console.log("Migration: Added is_staple column to products table");
   }
 }
 

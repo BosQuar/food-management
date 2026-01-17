@@ -3,6 +3,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
+  import { Checkbox } from "$lib/components/ui/checkbox";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import * as Select from "$lib/components/ui/select";
@@ -33,6 +34,7 @@
   let editProductName = $state("");
   let editProductUnit = $state("");
   let editProductCategory = $state<string>("");
+  let editProductIsStaple = $state(false);
 
   onMount(() => {
     productsStore.fetch();
@@ -97,6 +99,7 @@
     editProductName = product.name;
     editProductUnit = product.default_unit;
     editProductCategory = product.store_category_id?.toString() || "";
+    editProductIsStaple = Boolean(product.is_staple);
     showEditDialog = true;
   }
 
@@ -108,6 +111,7 @@
         store_category_id: editProductCategory
           ? parseInt(editProductCategory)
           : null,
+        is_staple: editProductIsStaple,
       });
       showEditDialog = false;
       selectedProduct = null;
@@ -319,6 +323,19 @@
           </Select.Content>
         </Select.Root>
       </div>
+      <label class="flex items-center gap-3 cursor-pointer">
+        <Checkbox
+          checked={editProductIsStaple}
+          onCheckedChange={(checked) =>
+            (editProductIsStaple = checked === true)}
+        />
+        <div>
+          <span class="text-sm font-medium">Basvara</span>
+          <p class="text-xs text-muted-foreground">
+            Basvaror förmarkeras inte i recept
+          </p>
+        </div>
+      </label>
     </div>
     <Dialog.Footer>
       <Button variant="outline" onclick={() => (showEditDialog = false)}

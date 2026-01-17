@@ -61,8 +61,9 @@ const products = [
   { name: "Grönskaksbuljong", category: "Kryddor/Oljor", default_unit: "frp" },
   { name: "Kycklingbuljong", category: "Kryddor/Oljor", default_unit: "frp" },
   { name: "Paprikapulver", category: "Kryddor/Oljor", default_unit: "st" },
-  { name: "Salt", category: "Kryddor/Oljor", default_unit: "st" },
-  { name: "Peppar", category: "Kryddor/Oljor", default_unit: "st" },
+  { name: "Salt", category: "Kryddor/Oljor", default_unit: "st", is_staple: true },
+  { name: "Peppar", category: "Kryddor/Oljor", default_unit: "st", is_staple: true },
+  { name: "Vatten", category: "Kryddor/Oljor", default_unit: "dl", is_staple: true },
   { name: "Olivolja", category: "Kryddor/Oljor", default_unit: "st" },
   { name: "Rapsolja", category: "Kryddor/Oljor", default_unit: "st" },
 
@@ -216,13 +217,18 @@ export function seed(force = false) {
 
   // Insert products and build name->id map
   const insertProduct = db.prepare(
-    "INSERT INTO products (name, store_category_id, default_unit) VALUES (?, ?, ?)",
+    "INSERT INTO products (name, store_category_id, default_unit, is_staple) VALUES (?, ?, ?, ?)",
   );
   const productMap = {};
 
   for (const product of products) {
     const categoryId = categoryMap[product.category];
-    const result = insertProduct.run(product.name, categoryId, product.default_unit);
+    const result = insertProduct.run(
+      product.name,
+      categoryId,
+      product.default_unit,
+      product.is_staple ? 1 : 0,
+    );
     productMap[product.name.toLowerCase()] = result.lastInsertRowid;
   }
 

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS products (
   store_category_id INTEGER REFERENCES store_categories(id),
   default_unit TEXT DEFAULT 'st',
   default_notes TEXT,
+  is_staple BOOLEAN DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

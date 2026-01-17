@@ -105,6 +105,7 @@ export interface Product {
   store_category_id: number | null;
   default_unit: string;
   default_notes: string | null;
+  is_staple: number;
   created_at: string;
 }
 
@@ -117,6 +118,7 @@ export interface CreateProduct {
   store_category_id?: number;
   default_unit?: string;
   default_notes?: string;
+  is_staple?: boolean;
 }
 
 export interface ShoppingItem {
@@ -159,6 +161,7 @@ export interface RecipeIngredient {
   unit: string | null;
   sort_order: number;
   product_name?: string;
+  is_staple?: number;
 }
 
 export interface Recipe {

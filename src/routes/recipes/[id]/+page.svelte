@@ -46,8 +46,13 @@
 
   function openAddToShoppingDialog() {
     if (recipe) {
-      // Select all ingredients by default
-      selectedIngredients = new Set(recipe.ingredients.map((_, i) => i));
+      // Select all non-staple ingredients by default
+      selectedIngredients = new Set(
+        recipe.ingredients
+          .map((ing, i) => ({ ing, i }))
+          .filter(({ ing }) => !ing.is_staple)
+          .map(({ i }) => i),
+      );
       showAddToShoppingDialog = true;
     }
   }

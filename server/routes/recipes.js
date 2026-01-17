@@ -50,20 +50,33 @@ router.get("/:id", (req, res) => {
     return res.status(404).json({ error: "Recipe not found" });
   }
 
+  // Get ingredients with is_staple info
+  // For product-linked: use the product's is_staple
+  // For freetext: check if custom_name matches any staple product name (case-insensitive)
   const ingredients = db
     .prepare(
       `
-		SELECT ri.*, p.name as product_name, p.default_unit
+		SELECT ri.*, p.name as product_name, p.default_unit,
+			CASE
+				WHEN ri.product_id IS NOT NULL THEN p.is_staple
+				WHEN ri.custom_name IS NOT NULL THEN (
+					SELECT COALESCE(MAX(is_staple), 0)
+					FROM products
+					WHERE LOWER(name) = LOWER(ri.custom_name)
+				)
+				ELSE 0
+			END as is_staple
 		FROM recipe_ingredients ri
 		LEFT JOIN products p ON ri.product_id = p.id
+		WHERE ri.recipe_id = ?
 		ORDER BY ri.sort_order
 	`,
     )
-    .all();
+    .all(id);
 
   res.json({
     ...recipe,
-    ingredients: ingredients.filter((i) => i.recipe_id === parseInt(id)),
+    ingredients,
   });
 });
 
