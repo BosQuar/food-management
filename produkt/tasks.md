@@ -216,16 +216,16 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 3.5 Receptlista-vy
+### 3.5 Receptlista-vy ✅
 
 **Beroende:** 3.1, 3.2, 2.4
 
-- [ ] Skapa `src/routes/recipes/+page.svelte`
-- [ ] Skapa `src/lib/components/RecipeCard.svelte`
-- [ ] Lista alla recept som kort
-- [ ] Varje kort visar: namn, antal ingredienser
-- [ ] Klick → navigera till `/recipes/[id]`
-- [ ] "+" knapp för nytt recept
+- [x] Skapa `src/routes/recipes/+page.svelte`
+- [x] Skapa `src/lib/components/RecipeCard.svelte`
+- [x] Lista alla recept som kort
+- [x] Varje kort visar: namn, antal ingredienser
+- [x] Klick → navigera till `/recipes/[id]`
+- [x] "+" knapp för nytt recept
 
 **Mål:** Kan se alla recept och navigera till enskilda
 
