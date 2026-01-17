@@ -41,7 +41,13 @@ export function getShoppingStore() {
 		async add(data: AddShoppingItem) {
 			try {
 				const item = await shoppingApi.add(data);
-				items = [...items, item];
+				// Check if item was updated (already existed) or is new
+				const existingIndex = items.findIndex(i => i.id === item.id);
+				if (existingIndex >= 0) {
+					items = items.map(i => i.id === item.id ? item : i);
+				} else {
+					items = [...items, item];
+				}
 				return item;
 			} catch (e) {
 				error = e instanceof Error ? e.message : 'Failed to add item';
@@ -52,7 +58,13 @@ export function getShoppingStore() {
 		async addCustom(data: AddCustomItem) {
 			try {
 				const item = await shoppingApi.addCustom(data);
-				items = [...items, item];
+				// Check if item was updated (already existed) or is new
+				const existingIndex = items.findIndex(i => i.id === item.id);
+				if (existingIndex >= 0) {
+					items = items.map(i => i.id === item.id ? item : i);
+				} else {
+					items = [...items, item];
+				}
 				return item;
 			} catch (e) {
 				error = e instanceof Error ? e.message : 'Failed to add custom item';

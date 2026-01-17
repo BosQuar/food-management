@@ -4,6 +4,8 @@
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { recipesStore } from '$lib/stores/recipes.svelte';
 	import { shoppingStore } from '$lib/stores/shopping.svelte';
@@ -11,7 +13,9 @@
 	import { ArrowLeft, Pencil, Trash2, ShoppingCart } from '@lucide/svelte';
 
 	let showDeleteDialog = $state(false);
+	let showAddToShoppingDialog = $state(false);
 	let servings = $state(4);
+	let selectedIngredients = $state<Set<number>>(new Set());
 
 	const recipeId = $derived(parseInt($page.params.id));
 
@@ -35,10 +39,44 @@
 		return scaled.toFixed(1).replace(/\.0$/, '');
 	}
 
+	function openAddToShoppingDialog() {
+		if (recipe) {
+			// Select all ingredients by default
+			selectedIngredients = new Set(recipe.ingredients.map((_, i) => i));
+			showAddToShoppingDialog = true;
+		}
+	}
+
+	function toggleIngredient(index: number) {
+		if (selectedIngredients.has(index)) {
+			selectedIngredients.delete(index);
+		} else {
+			selectedIngredients.add(index);
+		}
+		selectedIngredients = new Set(selectedIngredients);
+	}
+
 	async function handleAddToShopping() {
 		if (recipe) {
-			await recipesStore.addToShopping(recipe.id, servings);
+			const ingredientsToAdd = recipe.ingredients.filter((_, i) => selectedIngredients.has(i));
+			for (const ing of ingredientsToAdd) {
+				const scaledAmount = ing.amount ? ing.amount * scaleFactor : 1;
+				if (ing.product_id) {
+					await shoppingStore.add({
+						product_id: ing.product_id,
+						quantity: scaledAmount,
+						unit: ing.unit || 'st'
+					});
+				} else if (ing.custom_name) {
+					await shoppingStore.addCustom({
+						custom_name: ing.custom_name,
+						quantity: scaledAmount,
+						unit: ing.unit || 'st'
+					});
+				}
+			}
 			await shoppingStore.fetch();
+			showAddToShoppingDialog = false;
 		}
 	}
 
@@ -106,7 +144,7 @@
 				onchange={(s) => servings = s}
 			/>
 
-			<Button onclick={handleAddToShopping}>
+			<Button onclick={openAddToShoppingDialog}>
 				<ShoppingCart class="h-4 w-4 mr-2" />
 				Lägg till på inköpslistan
 			</Button>
@@ -158,3 +196,40 @@
 		{/if}
 	{/if}
 </div>
+
+<!-- Add to shopping dialog -->
+<Dialog.Root bind:open={showAddToShoppingDialog}>
+	<Dialog.Content class="max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>Lägg till på inköpslistan</Dialog.Title>
+			<Dialog.Description>
+				Välj vilka ingredienser du vill lägga till ({servings} portioner)
+			</Dialog.Description>
+		</Dialog.Header>
+		<div class="max-h-80 overflow-y-auto py-4">
+			{#if recipe}
+				<div class="space-y-3">
+					{#each recipe.ingredients as ingredient, index}
+						<label class="flex items-center gap-3 cursor-pointer hover:bg-accent rounded-md p-2 -mx-2">
+							<Checkbox
+								checked={selectedIngredients.has(index)}
+								onCheckedChange={() => toggleIngredient(index)}
+							/>
+							<span class="flex-1 text-sm">
+								<span class="font-medium">{scaleAmount(ingredient.amount)} {ingredient.unit || ''}</span>
+								{' '}
+								{ingredient.custom_name || ingredient.product_name || 'Okänd ingrediens'}
+							</span>
+						</label>
+					{/each}
+				</div>
+			{/if}
+		</div>
+		<Dialog.Footer>
+			<Button variant="outline" onclick={() => showAddToShoppingDialog = false}>Avbryt</Button>
+			<Button onclick={handleAddToShopping} disabled={selectedIngredients.size === 0}>
+				Lägg till ({selectedIngredients.size})
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

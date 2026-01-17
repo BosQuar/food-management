@@ -25,6 +25,7 @@ router.get('/', (req, res) => {
 });
 
 // POST /api/shopping - lägg till produkt (med product_id)
+// Om produkten redan finns i listan, uppdatera kvantiteten istället
 router.post('/', (req, res) => {
 	const db = getDb();
 	const { product_id, quantity, unit, notes } = req.body;
@@ -38,24 +39,57 @@ router.post('/', (req, res) => {
 		return res.status(404).json({ error: 'Product not found' });
 	}
 
-	const result = db.prepare(`
-		INSERT INTO shopping_items (product_id, quantity, unit, notes)
-		VALUES (?, ?, ?, ?)
-	`).run(product_id, quantity || 1, unit || product.default_unit, notes || null);
+	const effectiveUnit = unit || product.default_unit;
+	const effectiveQuantity = quantity || 1;
 
-	const item = db.prepare(`
-		SELECT si.*, p.name as product_name, sc.name as category_name
-		FROM shopping_items si
-		LEFT JOIN products p ON si.product_id = p.id
-		LEFT JOIN store_categories sc ON p.store_category_id = sc.id
-		WHERE si.id = ?
-	`).get(result.lastInsertRowid);
+	// Check if product already exists in shopping list with same unit
+	const existing = db.prepare(`
+		SELECT * FROM shopping_items
+		WHERE product_id = ? AND unit = ? AND is_done = 0
+	`).get(product_id, effectiveUnit);
 
-	broadcastShoppingChange('add', item);
-	res.status(201).json(item);
+	let item;
+	if (existing) {
+		// Update quantity
+		const newQuantity = existing.quantity + effectiveQuantity;
+		db.prepare(`
+			UPDATE shopping_items
+			SET quantity = ?, updated_at = CURRENT_TIMESTAMP
+			WHERE id = ?
+		`).run(newQuantity, existing.id);
+
+		item = db.prepare(`
+			SELECT si.*, p.name as product_name, sc.name as category_name
+			FROM shopping_items si
+			LEFT JOIN products p ON si.product_id = p.id
+			LEFT JOIN store_categories sc ON p.store_category_id = sc.id
+			WHERE si.id = ?
+		`).get(existing.id);
+
+		broadcastShoppingChange('update', item);
+		res.json(item);
+	} else {
+		// Insert new item
+		const result = db.prepare(`
+			INSERT INTO shopping_items (product_id, quantity, unit, notes)
+			VALUES (?, ?, ?, ?)
+		`).run(product_id, effectiveQuantity, effectiveUnit, notes || null);
+
+		item = db.prepare(`
+			SELECT si.*, p.name as product_name, sc.name as category_name
+			FROM shopping_items si
+			LEFT JOIN products p ON si.product_id = p.id
+			LEFT JOIN store_categories sc ON p.store_category_id = sc.id
+			WHERE si.id = ?
+		`).get(result.lastInsertRowid);
+
+		broadcastShoppingChange('add', item);
+		res.status(201).json(item);
+	}
 });
 
 // POST /api/shopping/custom - lägg till manuell vara (custom_name)
+// Om varan redan finns i listan, uppdatera kvantiteten istället
 router.post('/custom', (req, res) => {
 	const db = getDb();
 	const { custom_name, store_category_id, quantity, unit, notes } = req.body;
@@ -64,20 +98,51 @@ router.post('/custom', (req, res) => {
 		return res.status(400).json({ error: 'custom_name is required' });
 	}
 
-	const result = db.prepare(`
-		INSERT INTO shopping_items (custom_name, store_category_id, quantity, unit, notes)
-		VALUES (?, ?, ?, ?, ?)
-	`).run(custom_name, store_category_id || null, quantity || 1, unit || 'st', notes || null);
+	const effectiveUnit = unit || 'st';
+	const effectiveQuantity = quantity || 1;
 
-	const item = db.prepare(`
-		SELECT si.*, sc.name as category_name
-		FROM shopping_items si
-		LEFT JOIN store_categories sc ON si.store_category_id = sc.id
-		WHERE si.id = ?
-	`).get(result.lastInsertRowid);
+	// Check if custom item already exists with same name and unit
+	const existing = db.prepare(`
+		SELECT * FROM shopping_items
+		WHERE custom_name = ? AND unit = ? AND is_done = 0
+	`).get(custom_name, effectiveUnit);
 
-	broadcastShoppingChange('add', item);
-	res.status(201).json(item);
+	let item;
+	if (existing) {
+		// Update quantity
+		const newQuantity = existing.quantity + effectiveQuantity;
+		db.prepare(`
+			UPDATE shopping_items
+			SET quantity = ?, updated_at = CURRENT_TIMESTAMP
+			WHERE id = ?
+		`).run(newQuantity, existing.id);
+
+		item = db.prepare(`
+			SELECT si.*, sc.name as category_name
+			FROM shopping_items si
+			LEFT JOIN store_categories sc ON si.store_category_id = sc.id
+			WHERE si.id = ?
+		`).get(existing.id);
+
+		broadcastShoppingChange('update', item);
+		res.json(item);
+	} else {
+		// Insert new item
+		const result = db.prepare(`
+			INSERT INTO shopping_items (custom_name, store_category_id, quantity, unit, notes)
+			VALUES (?, ?, ?, ?, ?)
+		`).run(custom_name, store_category_id || null, effectiveQuantity, effectiveUnit, notes || null);
+
+		item = db.prepare(`
+			SELECT si.*, sc.name as category_name
+			FROM shopping_items si
+			LEFT JOIN store_categories sc ON si.store_category_id = sc.id
+			WHERE si.id = ?
+		`).get(result.lastInsertRowid);
+
+		broadcastShoppingChange('add', item);
+		res.status(201).json(item);
+	}
 });
 
 // PUT /api/shopping/:id - uppdatera quantity/unit/done
