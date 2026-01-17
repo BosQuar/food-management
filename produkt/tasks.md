@@ -200,17 +200,17 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 3.4 Produktkatalog-vy
+### 3.4 Produktkatalog-vy ✅
 
 **Beroende:** 3.1, 3.2, 2.2
 
-- [ ] Skapa `src/routes/products/+page.svelte`
-- [ ] Skapa `src/lib/components/ProductList.svelte`
-- [ ] Sökfält med realtidsfilter
-- [ ] Lista produkter grupperat per kategori
-- [ ] Klick på produkt → dialog för quantity/unit → lägg till på lista
-- [ ] "+" knapp för att skapa ny produkt (dialog)
-- [ ] Swipe/knapp för redigera/ta bort produkt
+- [x] Skapa `src/routes/products/+page.svelte`
+- [x] Skapa `src/lib/components/ProductList.svelte`
+- [x] Sökfält med realtidsfilter
+- [x] Lista produkter grupperat per kategori
+- [x] Klick på produkt → dialog för quantity/unit → lägg till på lista
+- [x] "+" knapp för att skapa ny produkt (dialog)
+- [x] Swipe/knapp för redigera/ta bort produkt
 
 **Mål:** Kan söka produkter, lägga till på lista, och hantera produktkatalogen
 
