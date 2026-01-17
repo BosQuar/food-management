@@ -1,0 +1,138 @@
+import express from 'express';
+import { getDb } from '../db/connection.js';
+
+const router = express.Router();
+
+// GET /api/shopping - hämta aktiv lista grupperat per kategori
+router.get('/', (req, res) => {
+	const db = getDb();
+
+	const items = db.prepare(`
+		SELECT
+			si.id, si.product_id, si.custom_name, si.store_category_id,
+			si.quantity, si.unit, si.notes, si.is_done, si.updated_at,
+			p.name as product_name,
+			COALESCE(si.store_category_id, p.store_category_id) as category_id,
+			sc.name as category_name, sc.sort_order
+		FROM shopping_items si
+		LEFT JOIN products p ON si.product_id = p.id
+		LEFT JOIN store_categories sc ON COALESCE(si.store_category_id, p.store_category_id) = sc.id
+		ORDER BY sc.sort_order, si.is_done, COALESCE(si.custom_name, p.name)
+	`).all();
+
+	res.json(items);
+});
+
+// POST /api/shopping - lägg till produkt (med product_id)
+router.post('/', (req, res) => {
+	const db = getDb();
+	const { product_id, quantity, unit, notes } = req.body;
+
+	if (!product_id) {
+		return res.status(400).json({ error: 'product_id is required' });
+	}
+
+	const product = db.prepare('SELECT * FROM products WHERE id = ?').get(product_id);
+	if (!product) {
+		return res.status(404).json({ error: 'Product not found' });
+	}
+
+	const result = db.prepare(`
+		INSERT INTO shopping_items (product_id, quantity, unit, notes)
+		VALUES (?, ?, ?, ?)
+	`).run(product_id, quantity || 1, unit || product.default_unit, notes || null);
+
+	const item = db.prepare(`
+		SELECT si.*, p.name as product_name, sc.name as category_name
+		FROM shopping_items si
+		LEFT JOIN products p ON si.product_id = p.id
+		LEFT JOIN store_categories sc ON p.store_category_id = sc.id
+		WHERE si.id = ?
+	`).get(result.lastInsertRowid);
+
+	res.status(201).json(item);
+});
+
+// POST /api/shopping/custom - lägg till manuell vara (custom_name)
+router.post('/custom', (req, res) => {
+	const db = getDb();
+	const { custom_name, store_category_id, quantity, unit, notes } = req.body;
+
+	if (!custom_name) {
+		return res.status(400).json({ error: 'custom_name is required' });
+	}
+
+	const result = db.prepare(`
+		INSERT INTO shopping_items (custom_name, store_category_id, quantity, unit, notes)
+		VALUES (?, ?, ?, ?, ?)
+	`).run(custom_name, store_category_id || null, quantity || 1, unit || 'st', notes || null);
+
+	const item = db.prepare(`
+		SELECT si.*, sc.name as category_name
+		FROM shopping_items si
+		LEFT JOIN store_categories sc ON si.store_category_id = sc.id
+		WHERE si.id = ?
+	`).get(result.lastInsertRowid);
+
+	res.status(201).json(item);
+});
+
+// PUT /api/shopping/:id - uppdatera quantity/unit/done
+router.put('/:id', (req, res) => {
+	const db = getDb();
+	const { id } = req.params;
+	const { quantity, unit, notes, is_done } = req.body;
+
+	const existing = db.prepare('SELECT * FROM shopping_items WHERE id = ?').get(id);
+	if (!existing) {
+		return res.status(404).json({ error: 'Shopping item not found' });
+	}
+
+	db.prepare(`
+		UPDATE shopping_items
+		SET quantity = ?, unit = ?, notes = ?, is_done = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+	`).run(
+		quantity ?? existing.quantity,
+		unit ?? existing.unit,
+		notes ?? existing.notes,
+		is_done ?? existing.is_done,
+		id
+	);
+
+	const item = db.prepare(`
+		SELECT si.*, p.name as product_name, sc.name as category_name
+		FROM shopping_items si
+		LEFT JOIN products p ON si.product_id = p.id
+		LEFT JOIN store_categories sc ON COALESCE(si.store_category_id, p.store_category_id) = sc.id
+		WHERE si.id = ?
+	`).get(id);
+
+	res.json(item);
+});
+
+// DELETE /api/shopping/:id - ta bort enskild
+router.delete('/:id', (req, res) => {
+	const db = getDb();
+	const { id } = req.params;
+
+	const existing = db.prepare('SELECT * FROM shopping_items WHERE id = ?').get(id);
+	if (!existing) {
+		return res.status(404).json({ error: 'Shopping item not found' });
+	}
+
+	db.prepare('DELETE FROM shopping_items WHERE id = ?').run(id);
+
+	res.json({ message: 'Shopping item deleted', id: parseInt(id) });
+});
+
+// POST /api/shopping/reset - rensa hela listan
+router.post('/reset', (req, res) => {
+	const db = getDb();
+
+	const result = db.prepare('DELETE FROM shopping_items').run();
+
+	res.json({ message: 'Shopping list cleared', itemsDeleted: result.changes });
+});
+
+export default router;

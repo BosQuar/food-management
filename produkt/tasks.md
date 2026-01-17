@@ -92,17 +92,17 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 2.3 API routes - Inköpslista
+### 2.3 API routes - Inköpslista ✅
 
 **Beroende:** 2.1, 2.2
 
-- [ ] Skapa `server/routes/shopping.js`
-- [ ] `GET /api/shopping` - hämta aktiv lista
-- [ ] `POST /api/shopping` - lägg till produkt (med product_id)
-- [ ] `POST /api/shopping/custom` - lägg till manuell vara (custom_name)
-- [ ] `PUT /api/shopping/:id` - uppdatera quantity/unit/done
-- [ ] `DELETE /api/shopping/:id` - ta bort enskild
-- [ ] `POST /api/shopping/reset` - rensa hela listan
+- [x] Skapa `server/routes/shopping.js`
+- [x] `GET /api/shopping` - hämta aktiv lista
+- [x] `POST /api/shopping` - lägg till produkt (med product_id)
+- [x] `POST /api/shopping/custom` - lägg till manuell vara (custom_name)
+- [x] `PUT /api/shopping/:id` - uppdatera quantity/unit/done
+- [x] `DELETE /api/shopping/:id` - ta bort enskild
+- [x] `POST /api/shopping/reset` - rensa hela listan
 
 **Mål:** Kan lägga till, bocka av och ta bort varor via API
 
