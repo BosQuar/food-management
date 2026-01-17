@@ -6,56 +6,56 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ## Fas 1: Grundstruktur
 
-### 1.1 Initiera SvelteKit-projekt
+### 1.1 Initiera SvelteKit-projekt ✅
 
-- [ ] Kör `npm create svelte@latest` i projektrot
-- [ ] Välj TypeScript (valfritt), ESLint, Prettier
-- [ ] Verifiera med `npm run dev`
+- [x] Kör `npm create svelte@latest` i projektrot
+- [x] Välj TypeScript (valfritt), ESLint, Prettier
+- [x] Verifiera med `npm run dev`
 
 **Mål:** Fungerande SvelteKit-projekt som startar på localhost
 
 ---
 
-### 1.2 Installera shadcn-svelte
+### 1.2 Installera shadcn-svelte ✅
 
 **Beroende:** 1.1
 
-- [ ] Installera Tailwind CSS
-- [ ] Kör `npx shadcn-svelte@latest init`
-- [ ] Lägg till baskomponenter: Button, Input, Card, Checkbox, Dialog
-- [ ] Konfigurera tema/färger för mobile-first design
+- [x] Installera Tailwind CSS
+- [x] Kör `npx shadcn-svelte@latest init`
+- [x] Lägg till baskomponenter: Button, Input, Card, Checkbox, Dialog
+- [x] Konfigurera tema/färger för mobile-first design
 
 **Mål:** shadcn-svelte fungerar, kan använda `<Button>` i en testvy
 
 ---
 
-### 1.3 Sätt upp SQLite + schema
+### 1.3 Sätt upp SQLite + schema ✅
 
 **Beroende:** 1.1
 
-- [ ] Installera `better-sqlite3`
-- [ ] Skapa `server/db/connection.js` - databasanslutning
-- [ ] Skapa `server/db/schema.sql` med alla tabeller:
+- [x] Installera `better-sqlite3`
+- [x] Skapa `server/db/connection.js` - databasanslutning
+- [x] Skapa `server/db/schema.sql` med alla tabeller:
   - `store_categories`
   - `products`
   - `shopping_items`
   - `recipes`
   - `recipe_ingredients`
   - `sync_log`
-- [ ] Skapa script för att köra schema vid uppstart
-- [ ] Skapa `data/` mapp för databasfilen
+- [x] Skapa script för att köra schema vid uppstart
+- [x] Skapa `data/` mapp för databasfilen
 
 **Mål:** Databas skapas automatiskt med rätt schema vid första körning
 
 ---
 
-### 1.4 Importera initial produktdata
+### 1.4 Importera initial produktdata ✅
 
 **Beroende:** 1.3
 
-- [ ] Skapa seed-data för `store_categories` (Frukt & Grönt, Mejeri, Kött, etc.)
-- [ ] Skapa seed-script som läser CSV/JSON med produkter
-- [ ] Kör seed vid tom databas
+- [x] Skapa seed-data för `store_categories` (Frukt & Grönt, Mejeri, Kött, etc.)
+- [x] Skapa seed-script som läser CSV/JSON med produkter
+- [x] Kör seed vid tom databas
 
 **Mål:** Databasen har kategorier och exempelprodukter att arbeta med
 
@@ -63,14 +63,14 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ## Fas 2: Backend
 
-### 2.1 Express server setup
+### 2.1 Express server setup ✅
 
 **Beroende:** 1.3
 
-- [ ] Installera `express`, `cors`
-- [ ] Skapa `server/index.js` med grundläggande Express-app
-- [ ] Konfigurera för att serva SvelteKit-build i produktion
-- [ ] Sätt port 8500
+- [x] Installera `express`, `cors`
+- [x] Skapa `server/index.js` med grundläggande Express-app
+- [x] Konfigurera för att serva SvelteKit-build i produktion
+- [x] Sätt port 8500
 
 **Mål:** Express-server startar och svarar på requests
 

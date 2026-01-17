@@ -1,63 +1,38 @@
-# Food Management
+# sv
 
-En self-hosted webbapp för matplanering och inköpslistor med realtidssynk och offline-stöd.
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-## Funktioner
+## Creating a project
 
-- **Delad inköpslista** - Synkas i realtid mellan alla enheter
-- **Produktkatalog** - Hantera produkter med kategorier och standardenheter
-- **Recept** - Spara recept med ingredienser och instruktioner
-- **URL-import** - Importera recept från webbsidor (JSON-LD)
-- **Portionsskalning** - Skala ingredienser efter antal portioner
-- **Offline-stöd** - Fungerar utan internet, synkar när uppkoppling finns
-- **Export/import** - Säkerhetskopiera och återställ all data
+If you're seeing this, you've probably already done this step. Congrats!
 
-## Tech Stack
+```sh
+# create a new project in the current directory
+npx sv create
 
-- **Frontend:** SvelteKit + shadcn-svelte
-- **Backend:** Node.js + Express + WebSocket
-- **Databas:** SQLite (better-sqlite3)
-- **Offline:** IndexedDB + Service Worker
-- **Deploy:** Docker
+# create a new project in my-app
+npx sv create my-app
+```
 
-## Kom igång
+## Developing
 
-### Utveckling
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-```bash
-npm install
+```sh
 npm run dev
+
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
 ```
 
-### Docker
+## Building
 
-```bash
-docker-compose up --build
+To create a production version of your app:
+
+```sh
+npm run build
 ```
 
-Appen körs på port **8500**.
+You can preview the production build with `npm run preview`.
 
-## Vyer
-
-| Sökväg          | Beskrivning                                |
-| --------------- | ------------------------------------------ |
-| `/`             | Inköpslista - huvudvy för att handla       |
-| `/products`     | Produktkatalog - lägg till varor på listan |
-| `/recipes`      | Receptlista                                |
-| `/recipes/new`  | Skapa nytt recept                          |
-| `/recipes/[id]` | Visa recept med skalning                   |
-
-## API
-
-- `GET/POST/PUT/DELETE /api/products` - Produkter
-- `GET/POST/PUT/DELETE /api/shopping` - Inköpslista
-- `GET/POST/PUT/DELETE /api/recipes` - Recept
-- `GET /api/backup` / `POST /api/restore` - Backup
-- `WS /ws` - Realtidssynk
-
-## Design
-
-- **Ingen autentisering** - Öppen för alla med länk
-- **En delad lista** - Samma lista för alla användare
-- **Mobile-first** - Optimerad för telefon
-- **PWA** - Kan installeras som app
+> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
