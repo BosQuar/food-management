@@ -249,20 +249,20 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 3.7 Receptredigering
+### 3.7 Receptredigering ✅
 
 **Beroende:** 3.5, 3.6
 
-- [ ] Skapa `src/routes/recipes/new/+page.svelte`
-- [ ] Skapa `src/routes/recipes/[id]/edit/+page.svelte`
-- [ ] Skapa `src/lib/components/RecipeEditor.svelte`
-- [ ] Skapa `src/lib/components/IngredientRow.svelte`
-- [ ] Titel-fält
-- [ ] Portioner (antal)
-- [ ] Ingredienser: välj produkt eller fritext + mängd + enhet
-- [ ] Lägg till/ta bort ingrediensrader
-- [ ] Instruktioner (textarea)
-- [ ] Spara/avbryt-knappar
+- [x] Skapa `src/routes/recipes/new/+page.svelte`
+- [x] Skapa `src/routes/recipes/[id]/edit/+page.svelte`
+- [x] Skapa `src/lib/components/RecipeEditor.svelte`
+- [x] Skapa `src/lib/components/IngredientRow.svelte`
+- [x] Titel-fält
+- [x] Portioner (antal)
+- [x] Ingredienser: välj produkt eller fritext + mängd + enhet
+- [x] Lägg till/ta bort ingrediensrader
+- [x] Instruktioner (textarea)
+- [x] Spara/avbryt-knappar
 
 **Mål:** Kan skapa och redigera recept med ingredienser
 
