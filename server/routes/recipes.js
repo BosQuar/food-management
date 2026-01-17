@@ -1,5 +1,6 @@
 import express from 'express';
 import { getDb } from '../db/connection.js';
+import { parseRecipeFromUrl } from '../services/recipe-parser.js';
 
 const router = express.Router();
 
@@ -16,6 +17,23 @@ router.get('/', (req, res) => {
 	`).all();
 
 	res.json(recipes);
+});
+
+// POST /api/recipes/import - importera från URL (JSON-LD)
+router.post('/import', async (req, res) => {
+	const { url } = req.body;
+
+	if (!url) {
+		return res.status(400).json({ error: 'URL is required' });
+	}
+
+	try {
+		const recipeData = await parseRecipeFromUrl(url);
+		res.json(recipeData);
+	} catch (error) {
+		console.error('Recipe import error:', error);
+		res.status(400).json({ error: error.message || 'Failed to import recipe' });
+	}
 });
 
 // GET /api/recipes/:id - hämta ett med ingredienser

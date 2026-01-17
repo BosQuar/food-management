@@ -72,6 +72,10 @@ export const recipesApi = {
 	toShopping: (id: number, scale?: number) => fetchJson<{ message: string }>(`${API_BASE}/recipes/${id}/to-shopping`, {
 		method: 'POST',
 		body: JSON.stringify({ scale })
+	}),
+	importFromUrl: (url: string) => fetchJson<ImportedRecipe>(`${API_BASE}/recipes/import`, {
+		method: 'POST',
+		body: JSON.stringify({ url })
 	})
 };
 
@@ -175,5 +179,18 @@ export interface CreateRecipe {
 		amount?: number;
 		unit?: string;
 		sort_order?: number;
+	}[];
+}
+
+export interface ImportedRecipe {
+	name: string;
+	instructions: string;
+	servings: number;
+	source_url: string;
+	ingredients: {
+		custom_name: string;
+		amount: number | null;
+		unit: string | null;
+		sort_order: number;
 	}[];
 }
