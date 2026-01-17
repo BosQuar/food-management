@@ -214,14 +214,16 @@ export function seed(force = false) {
     categoryMap[cat.name] = result.lastInsertRowid;
   }
 
-  // Insert products
+  // Insert products and build name->id map
   const insertProduct = db.prepare(
     "INSERT INTO products (name, store_category_id, default_unit) VALUES (?, ?, ?)",
   );
+  const productMap = {};
 
   for (const product of products) {
     const categoryId = categoryMap[product.category];
-    insertProduct.run(product.name, categoryId, product.default_unit);
+    const result = insertProduct.run(product.name, categoryId, product.default_unit);
+    productMap[product.name.toLowerCase()] = result.lastInsertRowid;
   }
 
   // Insert recipes
@@ -229,7 +231,7 @@ export function seed(force = false) {
     "INSERT INTO recipes (name, description, instructions, servings) VALUES (?, ?, ?, ?)",
   );
   const insertIngredient = db.prepare(
-    "INSERT INTO recipe_ingredients (recipe_id, custom_name, amount, unit, sort_order) VALUES (?, ?, ?, ?, ?)",
+    "INSERT INTO recipe_ingredients (recipe_id, product_id, custom_name, amount, unit, sort_order) VALUES (?, ?, ?, ?, ?, ?)",
   );
 
   // Sweet Chili Chicken recipe
@@ -269,7 +271,9 @@ export function seed(force = false) {
   const recipeId = recipeResult.lastInsertRowid;
 
   sweetChiliRecipe.ingredients.forEach((ing, index) => {
-    insertIngredient.run(recipeId, ing.name, ing.amount, ing.unit, index);
+    const productId = productMap[ing.name.toLowerCase()] || null;
+    const customName = productId ? null : ing.name;
+    insertIngredient.run(recipeId, productId, customName, ing.amount, ing.unit, index);
   });
 
   console.log(
