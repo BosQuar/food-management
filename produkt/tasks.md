@@ -152,17 +152,17 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ## Fas 3: Frontend
 
-### 3.1 Layout med navigation
+### 3.1 Layout med navigation ✅
 
 **Beroende:** 1.2
 
-- [ ] Skapa `src/routes/+layout.svelte`
-- [ ] Implementera bottom navigation (mobile-first):
+- [x] Skapa `src/routes/+layout.svelte`
+- [x] Implementera bottom navigation (mobile-first):
   - Inköpslista (/)
   - Produkter (/products)
   - Recept (/recipes)
-- [ ] Responsiv design för desktop
-- [ ] Global CSS i `app.css`
+- [x] Responsiv design för desktop
+- [x] Global CSS i `app.css`
 
 **Mål:** Navigation fungerar mellan alla huvudvyer
 
