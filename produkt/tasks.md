@@ -182,19 +182,19 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 3.3 Inköpslista-vy
+### 3.3 Inköpslista-vy ✅
 
 **Beroende:** 3.1, 3.2, 2.3
 
-- [ ] Skapa `src/routes/+page.svelte`
-- [ ] Skapa `src/lib/components/ShoppingList.svelte`
-- [ ] Skapa `src/lib/components/ShoppingItem.svelte`
-- [ ] Visa items grupperat per kategori
-- [ ] Sortering: kategori → done-status → namn
-- [ ] Checkbox för att toggla is_done
-- [ ] Avbockade visas överstrukna längst ner i kategori
-- [ ] Knapp "Återställ lista" med bekräftelse-dialog
-- [ ] Swipe eller knapp för att ta bort enskild vara
+- [x] Skapa `src/routes/+page.svelte`
+- [x] Skapa `src/lib/components/ShoppingList.svelte`
+- [x] Skapa `src/lib/components/ShoppingItem.svelte`
+- [x] Visa items grupperat per kategori
+- [x] Sortering: kategori → done-status → namn
+- [x] Checkbox för att toggla is_done
+- [x] Avbockade visas överstrukna längst ner i kategori
+- [x] Knapp "Återställ lista" med bekräftelse-dialog
+- [x] Swipe eller knapp för att ta bort enskild vara
 
 **Mål:** Kan se lista, bocka av varor, och rensa listan
 
