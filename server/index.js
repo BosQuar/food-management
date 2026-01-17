@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getDb, closeDb } from './db/connection.js';
 import { seed } from './db/seed.js';
+import productsRouter from './routes/products.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,10 +20,12 @@ app.use(express.json());
 getDb();
 seed();
 
-// API Routes (to be added)
+// API Routes
 app.get('/api/health', (req, res) => {
 	res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.use('/api/products', productsRouter);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

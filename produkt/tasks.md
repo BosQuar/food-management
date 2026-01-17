@@ -76,17 +76,17 @@ Detaljerad uppgiftslista baserad på den tekniska planen. Uppgifter är gruppera
 
 ---
 
-### 2.2 API routes - Produkter
+### 2.2 API routes - Produkter ✅
 
 **Beroende:** 2.1
 
-- [ ] Skapa `server/routes/products.js`
-- [ ] `GET /api/products` - lista alla, grupperat per kategori
-- [ ] `POST /api/products` - skapa ny produkt
-- [ ] `PUT /api/products/:id` - uppdatera produkt
-- [ ] `DELETE /api/products/:id` - ta bort produkt
-- [ ] `GET /api/products/export` - exportera som JSON
-- [ ] `POST /api/products/import` - importera från JSON
+- [x] Skapa `server/routes/products.js`
+- [x] `GET /api/products` - lista alla, grupperat per kategori
+- [x] `POST /api/products` - skapa ny produkt
+- [x] `PUT /api/products/:id` - uppdatera produkt
+- [x] `DELETE /api/products/:id` - ta bort produkt
+- [x] `GET /api/products/export` - exportera som JSON
+- [x] `POST /api/products/import` - importera från JSON
 
 **Mål:** Alla produkt-endpoints fungerar via Postman/curl
 
