@@ -21,7 +21,7 @@ router.get("/", (req, res) => {
   const products = db
     .prepare(
       `
-		SELECT p.id, p.name, p.store_category_id, p.default_unit, p.default_notes, p.is_staple, p.created_at
+		SELECT p.id, p.name, p.store_category_id, p.default_unit, p.default_notes, p.is_staple, p.is_misc, p.created_at
 		FROM products p
 		ORDER BY p.name
 	`,
@@ -77,6 +77,7 @@ router.post("/import-merge", (req, res) => {
 
   const transaction = db.transaction(() => {
     // Import categories if provided (by name, skip if exists)
+    const newCategoryIds = [];
     if (categories && Array.isArray(categories)) {
       const existingCats = db
         .prepare("SELECT name FROM store_categories")
@@ -89,8 +90,19 @@ router.post("/import-merge", (req, res) => {
 
       for (const cat of categories) {
         if (!existingCats.includes(cat.name.toLowerCase())) {
-          insertCat.run(cat.name, cat.sort_order || 0);
+          const result = insertCat.run(cat.name, cat.sort_order || 0);
+          newCategoryIds.push(result.lastInsertRowid);
         }
+      }
+    }
+
+    // Auto-create "Sällansaker" for new categories
+    if (newCategoryIds.length > 0) {
+      const insertMisc = db.prepare(
+        "INSERT INTO products (name, store_category_id, default_unit, is_misc) VALUES (?, ?, ?, ?)",
+      );
+      for (const catId of newCategoryIds) {
+        insertMisc.run("Sällansaker", catId, "st", 1);
       }
     }
 
@@ -262,6 +274,11 @@ router.delete("/:id", (req, res) => {
   const existing = db.prepare("SELECT * FROM products WHERE id = ?").get(id);
   if (!existing) {
     return res.status(404).json({ error: "Product not found" });
+  }
+
+  // Prevent deletion of misc products (Sällansaker)
+  if (existing.is_misc) {
+    return res.status(400).json({ error: "Cannot delete misc product" });
   }
 
   db.prepare("DELETE FROM products WHERE id = ?").run(id);

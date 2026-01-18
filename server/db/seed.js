@@ -241,7 +241,7 @@ export function seed(force = false) {
 
   // Insert products and build name->id map
   const insertProduct = db.prepare(
-    "INSERT INTO products (name, store_category_id, default_unit, is_staple) VALUES (?, ?, ?, ?)",
+    "INSERT INTO products (name, store_category_id, default_unit, is_staple, is_misc) VALUES (?, ?, ?, ?, ?)",
   );
   const productMap = {};
 
@@ -252,8 +252,15 @@ export function seed(force = false) {
       categoryId,
       product.default_unit,
       product.is_staple ? 1 : 0,
+      0,
     );
     productMap[product.name.toLowerCase()] = result.lastInsertRowid;
+  }
+
+  // Insert "Sällansaker" for each category
+  for (const cat of categories) {
+    const categoryId = categoryMap[cat.name];
+    insertProduct.run("Sällansaker", categoryId, "st", 0, 1);
   }
 
   // Insert tags

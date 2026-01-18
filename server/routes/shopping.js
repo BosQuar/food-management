@@ -14,13 +14,13 @@ router.get("/", (req, res) => {
 		SELECT
 			si.id, si.product_id, si.custom_name, si.store_category_id,
 			si.quantity, si.unit, si.notes, si.is_done, si.updated_at,
-			p.name as product_name,
+			p.name as product_name, p.is_misc,
 			COALESCE(si.store_category_id, p.store_category_id) as category_id,
 			sc.name as category_name, sc.sort_order
 		FROM shopping_items si
 		LEFT JOIN products p ON si.product_id = p.id
 		LEFT JOIN store_categories sc ON COALESCE(si.store_category_id, p.store_category_id) = sc.id
-		ORDER BY sc.sort_order, si.is_done, COALESCE(si.custom_name, p.name)
+		ORDER BY sc.sort_order, si.is_done, p.is_misc, COALESCE(si.custom_name, p.name)
 	`,
     )
     .all();

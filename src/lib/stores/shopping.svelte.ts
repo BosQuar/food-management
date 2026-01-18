@@ -134,10 +134,14 @@ export function getShoppingStore() {
         grouped.get(categoryName)!.push(item);
       }
 
-      // Sort each group: not done first, then by name
+      // Sort each group: not done first, then misc last, then by name
       for (const [, group] of grouped) {
         group.sort((a, b) => {
           if (a.is_done !== b.is_done) return a.is_done - b.is_done;
+          // Misc items (Sällansaker) should be last
+          const aMisc = a.is_misc || 0;
+          const bMisc = b.is_misc || 0;
+          if (aMisc !== bMisc) return aMisc - bMisc;
           const nameA = a.custom_name || a.product_name || "";
           const nameB = b.custom_name || b.product_name || "";
           return nameA.localeCompare(nameB, "sv");

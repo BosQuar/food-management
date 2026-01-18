@@ -125,6 +125,7 @@ export interface Product {
   default_unit: string;
   default_notes: string | null;
   is_staple: number;
+  is_misc: number;
   created_at: string;
 }
 
@@ -151,6 +152,7 @@ export interface ShoppingItem {
   is_done: number;
   updated_at: string;
   product_name?: string;
+  is_misc?: number;
   category_name?: string;
   category_id?: number;
   sort_order?: number;

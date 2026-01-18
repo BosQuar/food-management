@@ -69,6 +69,23 @@
   // Track recently added products for visual feedback
   let recentlyAdded = $state<Set<number>>(new Set());
 
+  // Track pending misc product to open notes dialog after adding
+  let pendingMiscNotes = $state<{
+    productId: number;
+    productName: string;
+  } | null>(null);
+
+  // Watch for misc product being added to open notes dialog
+  $effect(() => {
+    if (pendingMiscNotes) {
+      const shoppingItem = getShoppingItem(pendingMiscNotes.productId);
+      if (shoppingItem) {
+        openNotesDialog(shoppingItem, pendingMiscNotes.productName);
+        pendingMiscNotes = null;
+      }
+    }
+  });
+
   // Remove confirmation dialog
   let showRemoveDialog = $state(false);
   let pendingRemove = $state<{
@@ -143,6 +160,15 @@
   );
 
   function handleAdd(product: Product) {
+    // For misc products already in list, just open notes dialog
+    if (product.is_misc) {
+      const existingItem = getShoppingItem(product.id);
+      if (existingItem) {
+        openNotesDialog(existingItem, product.name);
+        return;
+      }
+    }
+
     const qtyValue = quantities[product.id];
     // Handle both string and number values from input
     const qty =
@@ -153,6 +179,11 @@
     // Clear the quantity input after adding
     quantities[product.id] = "";
 
+    // For misc products, set pending to open notes dialog after added
+    if (product.is_misc) {
+      pendingMiscNotes = { productId: product.id, productName: product.name };
+    }
+
     // Show visual feedback
     recentlyAdded.add(product.id);
     recentlyAdded = new Set(recentlyAdded);
@@ -162,11 +193,25 @@
     }, 1000);
   }
 
+  // Sort products: is_misc last, then alphabetically
+  function sortProducts(products: Product[]) {
+    return [...products].sort((a, b) => {
+      if (a.is_misc && !b.is_misc) return 1;
+      if (!a.is_misc && b.is_misc) return -1;
+      return a.name.localeCompare(b.name, "sv");
+    });
+  }
+
   const filteredCategories = $derived(() => {
-    if (!searchQuery.trim()) return categories;
+    const sorted = categories.map((cat) => ({
+      ...cat,
+      products: sortProducts(cat.products),
+    }));
+
+    if (!searchQuery.trim()) return sorted;
 
     const query = searchQuery.toLowerCase();
-    return categories
+    return sorted
       .map((cat) => ({
         ...cat,
         products: cat.products.filter((p) =>
@@ -221,7 +266,14 @@
                 <div
                   class="flex items-center gap-2 py-2 hover:bg-accent/50 rounded-md px-1 -mx-1 transition-colors group"
                 >
-                  <div class="flex-1 min-w-0">
+                  <div
+                    class="flex-1 min-w-0 {!editMode ? 'cursor-pointer' : ''}"
+                    onclick={() => !editMode && handleAdd(product)}
+                    onkeydown={(e) =>
+                      !editMode && e.key === "Enter" && handleAdd(product)}
+                    role={!editMode ? "button" : undefined}
+                    tabindex={!editMode ? 0 : undefined}
+                  >
                     <div class="flex items-center gap-1.5">
                       <p
                         class="text-sm font-medium truncate group-hover:font-semibold {inList
@@ -248,23 +300,26 @@
 
                   {#if editMode}
                     <!-- Edit mode: show edit/delete buttons -->
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      class="h-8 w-8 shrink-0"
-                      onclick={() => onEdit(product)}
-                    >
-                      <Pencil class="h-4 w-4" />
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      class="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                      onclick={() => onDelete(product)}
-                    >
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
+                    {#if !product.is_misc}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        class="h-8 w-8 shrink-0"
+                        onclick={() => onEdit(product)}
+                      >
+                        <Pencil class="h-4 w-4" />
+                      </Button>
+                    {/if}
+                    {#if !product.is_misc}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        class="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        onclick={() => onDelete(product)}
+                      >
+                        <Trash2 class="h-4 w-4" />
+                      </Button>
+                    {/if}
                   {:else}
                     <!-- Add mode: show notes, quantity input and add button -->
                     {#if inList}
@@ -280,15 +335,18 @@
                       </Button>
                     {/if}
 
-                    <Input
-                      type="number"
-                      min="0.1"
-                      step="0.1"
-                      placeholder=""
-                      class="w-16 h-8 text-sm text-center"
-                      bind:value={quantities[product.id]}
-                      onkeydown={(e) => e.key === "Enter" && handleAdd(product)}
-                    />
+                    {#if !product.is_misc}
+                      <Input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        placeholder=""
+                        class="w-16 h-8 text-sm text-center"
+                        bind:value={quantities[product.id]}
+                        onkeydown={(e) =>
+                          e.key === "Enter" && handleAdd(product)}
+                      />
+                    {/if}
 
                     <Button
                       variant="ghost"

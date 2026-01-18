@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS products (
   default_unit TEXT DEFAULT 'st',
   default_notes TEXT,
   is_staple BOOLEAN DEFAULT 0,
+  is_misc BOOLEAN DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

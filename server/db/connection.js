@@ -74,6 +74,13 @@ function runMigrations() {
     `);
     console.log("Migration: Created tags and recipe_tags tables");
   }
+
+  // Migration: Add is_misc column to products table
+  const hasIsMisc = productColumns.some((col) => col.name === "is_misc");
+  if (!hasIsMisc) {
+    db.exec("ALTER TABLE products ADD COLUMN is_misc BOOLEAN DEFAULT 0");
+    console.log("Migration: Added is_misc column to products table");
+  }
 }
 
 export function closeDb() {
