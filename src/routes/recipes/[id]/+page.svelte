@@ -173,8 +173,9 @@
       />
 
       <Button onclick={openAddToShoppingDialog}>
-        <ShoppingCart class="h-4 w-4 mr-2" />
-        Lägg till på inköpslistan
+        <ShoppingCart class="h-4 w-4 sm:mr-2" />
+        <span class="hidden sm:inline">Lägg till på inköpslistan</span>
+        <span class="sm:hidden">Till inköpslistan</span>
       </Button>
     </div>
 

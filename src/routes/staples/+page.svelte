@@ -74,8 +74,8 @@
       <Dialog.Trigger>
         {#snippet child({ props })}
           <Button size="sm" {...props}>
-            <Plus class="h-4 w-4 mr-2" />
-            Ny produkt
+            <Plus class="h-4 w-4 sm:mr-2" />
+            <span class="hidden sm:inline">Ny produkt</span>
           </Button>
         {/snippet}
       </Dialog.Trigger>

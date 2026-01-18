@@ -50,19 +50,19 @@
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold">Recept</h1>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1 sm:gap-2">
       <Button
         variant="outline"
         size="sm"
         onclick={() => (showTagDialog = true)}
       >
-        <Tags class="h-4 w-4 mr-2" />
-        Taggar
+        <Tags class="h-4 w-4 sm:mr-2" />
+        <span class="hidden sm:inline">Taggar</span>
       </Button>
 
       <Button size="sm" href="/recipes/new">
-        <Plus class="h-4 w-4 mr-2" />
-        Nytt recept
+        <Plus class="h-4 w-4 sm:mr-2" />
+        <span class="hidden sm:inline">Nytt recept</span>
       </Button>
     </div>
   </div>

@@ -73,8 +73,8 @@
               {...props}
               disabled={shoppingStore.totalCount === 0}
             >
-              <RotateCcw class="h-4 w-4 mr-2" />
-              Återställ
+              <RotateCcw class="h-4 w-4 sm:mr-2" />
+              <span class="hidden sm:inline">Återställ</span>
             </Button>
           {/snippet}
         </AlertDialog.Trigger>

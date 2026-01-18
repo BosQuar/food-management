@@ -260,14 +260,14 @@
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold">Produkter</h1>
 
-    <div class="flex gap-2">
+    <div class="flex gap-1 sm:gap-2">
       <Button
         variant="outline"
         size="sm"
         onclick={() => (showCategoriesDialog = true)}
       >
-        <FolderOpen class="h-4 w-4 mr-2" />
-        Kategorier
+        <FolderOpen class="h-4 w-4 sm:mr-2" />
+        <span class="hidden sm:inline">Kategorier</span>
       </Button>
 
       <Button
@@ -275,16 +275,16 @@
         size="sm"
         onclick={() => (editMode = !editMode)}
       >
-        <Settings class="h-4 w-4 mr-2" />
-        {editMode ? "Klar" : "Redigera"}
+        <Settings class="h-4 w-4 sm:mr-2" />
+        <span class="hidden sm:inline">{editMode ? "Klar" : "Redigera"}</span>
       </Button>
 
       <Dialog.Root bind:open={showAddDialog}>
         <Dialog.Trigger>
           {#snippet child({ props })}
             <Button size="sm" {...props}>
-              <Plus class="h-4 w-4 mr-2" />
-              Ny produkt
+              <Plus class="h-4 w-4 sm:mr-2" />
+              <span class="hidden sm:inline">Ny produkt</span>
             </Button>
           {/snippet}
         </Dialog.Trigger>
