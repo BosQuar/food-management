@@ -1,8 +1,15 @@
 <script lang="ts">
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
-  import * as Select from "$lib/components/ui/select";
-  import { Trash2, ChevronUp, ChevronDown } from "@lucide/svelte";
+  import * as Popover from "$lib/components/ui/popover";
+  import * as Command from "$lib/components/ui/command";
+  import {
+    Trash2,
+    ChevronUp,
+    ChevronDown,
+    ChevronsUpDown,
+    Check,
+  } from "@lucide/svelte";
   import type { Product } from "$lib/api";
 
   interface Ingredient {
@@ -36,18 +43,32 @@
 
   let useCustom = $state(!ingredient.product_id);
   let selectedProductId = $state(ingredient.product_id?.toString() || "");
+  let open = $state(false);
+  let searchValue = $state("");
 
-  function handleProductChange(value: string) {
-    selectedProductId = value;
-    if (value) {
-      const product = products.find((p) => p.id === parseInt(value));
-      onchange({
-        ...ingredient,
-        product_id: parseInt(value),
-        custom_name: undefined,
-        unit: ingredient.unit || product?.default_unit || "st",
-      });
-    }
+  const selectedProduct = $derived(
+    products.find((p) => p.id.toString() === selectedProductId),
+  );
+
+  const filteredProducts = $derived(
+    searchValue.trim()
+      ? products.filter((p) =>
+          p.name.toLowerCase().includes(searchValue.toLowerCase()),
+        )
+      : products,
+  );
+
+  function handleProductSelect(productId: number) {
+    const product = products.find((p) => p.id === productId);
+    selectedProductId = productId.toString();
+    onchange({
+      ...ingredient,
+      product_id: productId,
+      custom_name: undefined,
+      unit: ingredient.unit || product?.default_unit || "st",
+    });
+    open = false;
+    searchValue = "";
   }
 
   function handleCustomNameChange(e: Event) {
@@ -103,23 +124,47 @@
           class="flex-1"
         />
       {:else}
-        <Select.Root
-          type="single"
-          value={selectedProductId}
-          onValueChange={handleProductChange}
-        >
-          <Select.Trigger class="flex-1">
-            {products.find((p) => p.id.toString() === selectedProductId)
-              ?.name || "Välj produkt"}
-          </Select.Trigger>
-          <Select.Content class="max-h-60">
-            {#each products as product}
-              <Select.Item value={product.id.toString()}
-                >{product.name}</Select.Item
+        <Popover.Root bind:open>
+          <Popover.Trigger>
+            {#snippet child({ props })}
+              <Button
+                variant="outline"
+                class="flex-1 justify-between font-normal"
+                {...props}
               >
-            {/each}
-          </Select.Content>
-        </Select.Root>
+                {selectedProduct?.name || "Välj produkt..."}
+                <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            {/snippet}
+          </Popover.Trigger>
+          <Popover.Content class="w-64 p-0" align="start">
+            <Command.Root shouldFilter={false}>
+              <Command.Input
+                placeholder="Sök produkt..."
+                bind:value={searchValue}
+              />
+              <Command.List class="max-h-60">
+                {#if filteredProducts.length === 0}
+                  <Command.Empty>Ingen produkt hittades</Command.Empty>
+                {/if}
+                {#each filteredProducts as product (product.id)}
+                  <Command.Item
+                    value={product.name}
+                    onSelect={() => handleProductSelect(product.id)}
+                  >
+                    <Check
+                      class="mr-2 h-4 w-4 {selectedProductId ===
+                      product.id.toString()
+                        ? 'opacity-100'
+                        : 'opacity-0'}"
+                    />
+                    {product.name}
+                  </Command.Item>
+                {/each}
+              </Command.List>
+            </Command.Root>
+          </Popover.Content>
+        </Popover.Root>
       {/if}
 
       <Button variant="ghost" size="sm" onclick={toggleCustom} class="text-xs">
