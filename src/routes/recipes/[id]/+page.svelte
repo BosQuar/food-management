@@ -10,6 +10,7 @@
     CardTitle,
   } from "$lib/components/ui/card";
   import { Checkbox } from "$lib/components/ui/checkbox";
+  import { Badge } from "$lib/components/ui/badge";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { recipesStore } from "$lib/stores/recipes.svelte";
@@ -154,6 +155,14 @@
   {:else if recipe}
     {#if recipe.description}
       <p class="text-muted-foreground">{recipe.description}</p>
+    {/if}
+
+    {#if recipe.tags && recipe.tags.length > 0}
+      <div class="flex flex-wrap gap-2">
+        {#each recipe.tags as tag (tag.id)}
+          <Badge variant="secondary">{tag.name}</Badge>
+        {/each}
+      </div>
     {/if}
 
     <div class="flex flex-wrap items-center gap-4">

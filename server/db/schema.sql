@@ -48,6 +48,19 @@ CREATE TABLE IF NOT EXISTS recipe_ingredients (
   sort_order INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS tags (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS recipe_tags (
+  id INTEGER PRIMARY KEY,
+  recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  UNIQUE(recipe_id, tag_id)
+);
+
 CREATE TABLE IF NOT EXISTS sync_log (
   id INTEGER PRIMARY KEY,
   table_name TEXT NOT NULL,
@@ -63,4 +76,6 @@ CREATE INDEX IF NOT EXISTS idx_shopping_items_product ON shopping_items(product_
 CREATE INDEX IF NOT EXISTS idx_shopping_items_category ON shopping_items(store_category_id);
 CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe ON recipe_ingredients(recipe_id);
 CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_product ON recipe_ingredients(product_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_tags_recipe ON recipe_tags(recipe_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_tags_tag ON recipe_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_sync_log_table ON sync_log(table_name, row_id);

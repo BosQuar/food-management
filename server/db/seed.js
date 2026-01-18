@@ -217,8 +217,10 @@ export function seed(force = false) {
 
   if (force) {
     console.log("Clearing existing data...");
+    db.prepare("DELETE FROM recipe_tags").run();
     db.prepare("DELETE FROM recipe_ingredients").run();
     db.prepare("DELETE FROM recipes").run();
+    db.prepare("DELETE FROM tags").run();
     db.prepare("DELETE FROM shopping_items").run();
     db.prepare("DELETE FROM products").run();
     db.prepare("DELETE FROM store_categories").run();
@@ -253,6 +255,17 @@ export function seed(force = false) {
     );
     productMap[product.name.toLowerCase()] = result.lastInsertRowid;
   }
+
+  // Insert tags
+  const insertTag = db.prepare("INSERT INTO tags (name) VALUES (?)");
+  const insertRecipeTag = db.prepare(
+    "INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)",
+  );
+
+  const middagResult = insertTag.run("Middag");
+  const efterrattResult = insertTag.run("Efterrätt");
+  const middagTagId = middagResult.lastInsertRowid;
+  const efterrattTagId = efterrattResult.lastInsertRowid;
 
   // Insert recipes
   const insertRecipe = db.prepare(
@@ -311,6 +324,9 @@ export function seed(force = false) {
     );
   });
 
+  // Tag: Middag
+  insertRecipeTag.run(recipeId, middagTagId);
+
   // Chokladpudding med keso och banan
   const chokladpuddingRecipe = {
     name: "Chokladpudding med keso och banan",
@@ -357,8 +373,11 @@ Servera ljummen eller kall med en klick kvarg, grädde eller färska bär.`,
     );
   });
 
+  // Tag: Efterrätt
+  insertRecipeTag.run(chokladpuddingId, efterrattTagId);
+
   console.log(
-    `Seeded ${categories.length} categories, ${products.length} products, and 2 recipes`,
+    `Seeded ${categories.length} categories, ${products.length} products, 2 tags, and 2 recipes`,
   );
 }
 

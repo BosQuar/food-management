@@ -20,7 +20,20 @@ router.get("/", (req, res) => {
     )
     .all();
 
-  res.json(recipes);
+  // Get tags for each recipe
+  const getTagsStmt = db.prepare(`
+    SELECT t.* FROM tags t
+    JOIN recipe_tags rt ON t.id = rt.tag_id
+    WHERE rt.recipe_id = ?
+    ORDER BY t.name
+  `);
+
+  const recipesWithTags = recipes.map((recipe) => ({
+    ...recipe,
+    tags: getTagsStmt.all(recipe.id),
+  }));
+
+  res.json(recipesWithTags);
 });
 
 // POST /api/recipes/import - importera från URL (JSON-LD)
@@ -74,17 +87,37 @@ router.get("/:id", (req, res) => {
     )
     .all(id);
 
+  // Get tags
+  const tags = db
+    .prepare(
+      `
+    SELECT t.* FROM tags t
+    JOIN recipe_tags rt ON t.id = rt.tag_id
+    WHERE rt.recipe_id = ?
+    ORDER BY t.name
+  `,
+    )
+    .all(id);
+
   res.json({
     ...recipe,
     ingredients,
+    tags,
   });
 });
 
 // POST /api/recipes - skapa med ingredienser
 router.post("/", (req, res) => {
   const db = getDb();
-  const { name, description, instructions, servings, source_url, ingredients } =
-    req.body;
+  const {
+    name,
+    description,
+    instructions,
+    servings,
+    source_url,
+    ingredients,
+    tag_ids,
+  } = req.body;
 
   if (!name) {
     return res.status(400).json({ error: "Name is required" });
@@ -123,6 +156,16 @@ router.post("/", (req, res) => {
       });
     }
 
+    // Handle tags
+    if (tag_ids && Array.isArray(tag_ids)) {
+      const insertRecipeTag = db.prepare(
+        "INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)",
+      );
+      for (const tagId of tag_ids) {
+        insertRecipeTag.run(recipeId, tagId);
+      }
+    }
+
     return recipeId;
   });
 
@@ -140,16 +183,35 @@ router.post("/", (req, res) => {
 	`,
     )
     .all(recipeId);
+  const recipeTags = db
+    .prepare(
+      `
+    SELECT t.* FROM tags t
+    JOIN recipe_tags rt ON t.id = rt.tag_id
+    WHERE rt.recipe_id = ?
+    ORDER BY t.name
+  `,
+    )
+    .all(recipeId);
 
-  res.status(201).json({ ...recipe, ingredients: recipeIngredients });
+  res
+    .status(201)
+    .json({ ...recipe, ingredients: recipeIngredients, tags: recipeTags });
 });
 
 // PUT /api/recipes/:id - uppdatera recept + ingredienser
 router.put("/:id", (req, res) => {
   const db = getDb();
   const { id } = req.params;
-  const { name, description, instructions, servings, source_url, ingredients } =
-    req.body;
+  const {
+    name,
+    description,
+    instructions,
+    servings,
+    source_url,
+    ingredients,
+    tag_ids,
+  } = req.body;
 
   const existing = db.prepare("SELECT * FROM recipes WHERE id = ?").get(id);
   if (!existing) {
@@ -194,6 +256,17 @@ router.put("/:id", (req, res) => {
         );
       });
     }
+
+    // Handle tags
+    if (tag_ids && Array.isArray(tag_ids)) {
+      db.prepare("DELETE FROM recipe_tags WHERE recipe_id = ?").run(id);
+      const insertRecipeTag = db.prepare(
+        "INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)",
+      );
+      for (const tagId of tag_ids) {
+        insertRecipeTag.run(id, tagId);
+      }
+    }
   });
 
   transaction();
@@ -210,8 +283,18 @@ router.put("/:id", (req, res) => {
 	`,
     )
     .all(id);
+  const recipeTags = db
+    .prepare(
+      `
+    SELECT t.* FROM tags t
+    JOIN recipe_tags rt ON t.id = rt.tag_id
+    WHERE rt.recipe_id = ?
+    ORDER BY t.name
+  `,
+    )
+    .all(id);
 
-  res.json({ ...recipe, ingredients: recipeIngredients });
+  res.json({ ...recipe, ingredients: recipeIngredients, tags: recipeTags });
 });
 
 // DELETE /api/recipes/:id - ta bort (CASCADE på ingredienser)

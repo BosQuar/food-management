@@ -8,6 +8,7 @@ import { setupWebSocket } from "./services/sync.js";
 import productsRouter from "./routes/products.js";
 import shoppingRouter from "./routes/shopping.js";
 import recipesRouter from "./routes/recipes.js";
+import tagsRouter from "./routes/tags.js";
 import backupRouter from "./routes/backup.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -32,6 +33,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/products", productsRouter);
 app.use("/api/shopping", shoppingRouter);
 app.use("/api/recipes", recipesRouter);
+app.use("/api/tags", tagsRouter);
 app.use("/api/backup", backupRouter);
 
 // Serve static files in production

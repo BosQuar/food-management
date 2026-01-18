@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
@@ -10,6 +11,8 @@
     CardTitle,
   } from "$lib/components/ui/card";
   import IngredientRow from "./IngredientRow.svelte";
+  import TagSelector from "./TagSelector.svelte";
+  import { tagsStore } from "$lib/stores/tags.svelte";
   import { Plus, Download } from "@lucide/svelte";
   import {
     recipesApi,
@@ -36,7 +39,12 @@
 
   let { recipe, products, onsave, oncancel, loading = false }: Props = $props();
 
+  onMount(() => {
+    tagsStore.fetch();
+  });
+
   let name = $state(recipe?.name || "");
+  let selectedTagIds = $state<number[]>(recipe?.tags?.map((t) => t.id) || []);
   let description = $state(recipe?.description || "");
   let servings = $state(recipe?.servings || 4);
   let instructions = $state(recipe?.instructions || "");
@@ -119,6 +127,7 @@
       instructions: instructions || undefined,
       source_url: sourceUrl || undefined,
       ingredients: validIngredients,
+      tag_ids: selectedTagIds,
     });
   }
 
@@ -177,6 +186,14 @@
         bind:value={servings}
         min="1"
         class="w-24"
+      />
+    </div>
+
+    <div class="space-y-2">
+      <Label>Taggar</Label>
+      <TagSelector
+        selectedIds={selectedTagIds}
+        onchange={(ids) => (selectedTagIds = ids)}
       />
     </div>
   </div>

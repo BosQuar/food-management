@@ -62,6 +62,25 @@ export const shoppingApi = {
     }),
 };
 
+// Tags API
+export const tagsApi = {
+  getAll: () => fetchJson<Tag[]>(`${API_BASE}/tags`),
+  create: (name: string) =>
+    fetchJson<Tag>(`${API_BASE}/tags`, {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+  update: (id: number, name: string) =>
+    fetchJson<Tag>(`${API_BASE}/tags/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ name }),
+    }),
+  delete: (id: number) =>
+    fetchJson<{ message: string }>(`${API_BASE}/tags/${id}`, {
+      method: "DELETE",
+    }),
+};
+
 // Recipes API
 export const recipesApi = {
   getAll: () => fetchJson<RecipeSummary[]>(`${API_BASE}/recipes`),
@@ -152,6 +171,12 @@ export interface AddCustomItem {
   notes?: string;
 }
 
+export interface Tag {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
 export interface RecipeIngredient {
   id: number;
   recipe_id: number;
@@ -173,6 +198,7 @@ export interface Recipe {
   source_url: string | null;
   created_at: string;
   ingredients: RecipeIngredient[];
+  tags: Tag[];
 }
 
 export interface RecipeSummary {
@@ -184,6 +210,7 @@ export interface RecipeSummary {
   source_url: string | null;
   created_at: string;
   ingredient_count: number;
+  tags: Tag[];
 }
 
 export interface CreateRecipe {
@@ -199,6 +226,7 @@ export interface CreateRecipe {
     unit?: string;
     sort_order?: number;
   }[];
+  tag_ids?: number[];
 }
 
 export interface ImportedRecipe {

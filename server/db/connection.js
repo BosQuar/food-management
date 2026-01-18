@@ -47,6 +47,33 @@ function runMigrations() {
     db.exec("ALTER TABLE products ADD COLUMN is_staple BOOLEAN DEFAULT 0");
     console.log("Migration: Added is_staple column to products table");
   }
+
+  // Migration: Create tags and recipe_tags tables
+  const tagsTable = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='tags'",
+    )
+    .get();
+  if (!tagsTable) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS tags (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS recipe_tags (
+        id INTEGER PRIMARY KEY,
+        recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+        tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+        UNIQUE(recipe_id, tag_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_recipe_tags_recipe ON recipe_tags(recipe_id);
+      CREATE INDEX IF NOT EXISTS idx_recipe_tags_tag ON recipe_tags(tag_id);
+    `);
+    console.log("Migration: Created tags and recipe_tags tables");
+  }
 }
 
 export function closeDb() {
