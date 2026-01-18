@@ -41,7 +41,7 @@
     if (scaled === Math.floor(scaled)) {
       return scaled.toString();
     }
-    return scaled.toFixed(1).replace(/\.0$/, "");
+    return scaled.toFixed(2).replace(/\.?0+$/, "");
   }
 
   function openAddToShoppingDialog() {
