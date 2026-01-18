@@ -10,8 +10,18 @@
   import { productsStore } from "$lib/stores/products.svelte";
   import { shoppingStore } from "$lib/stores/shopping.svelte";
   import ProductList from "$lib/components/ProductList.svelte";
-  import { Plus, Search, Settings } from "@lucide/svelte";
-  import type { Product } from "$lib/api";
+  import {
+    Plus,
+    Search,
+    Settings,
+    FolderOpen,
+    Pencil,
+    Trash2,
+    ChevronUp,
+    ChevronDown,
+  } from "@lucide/svelte";
+  import type { Product, Category } from "$lib/api";
+  import { categoriesApi } from "$lib/api";
 
   let searchQuery = $state("");
   let editMode = $state(false);
@@ -35,6 +45,16 @@
   let editProductUnit = $state("");
   let editProductCategory = $state<string>("");
   let editProductIsStaple = $state(false);
+
+  // Category management
+  let showCategoriesDialog = $state(false);
+  let showAddCategoryDialog = $state(false);
+  let showEditCategoryDialog = $state(false);
+  let showDeleteCategoryDialog = $state(false);
+  let selectedCategory = $state<Category | null>(null);
+  let newCategoryName = $state("");
+  let editCategoryName = $state("");
+  let categoryError = $state<string | null>(null);
 
   onMount(() => {
     productsStore.fetch();
@@ -151,6 +171,89 @@
       label: c.name,
     })),
   );
+
+  // Category functions
+  async function handleCreateCategory() {
+    categoryError = null;
+    try {
+      await categoriesApi.create({ name: newCategoryName });
+      await productsStore.fetch();
+      showAddCategoryDialog = false;
+      newCategoryName = "";
+    } catch (e) {
+      categoryError =
+        e instanceof Error ? e.message : "Kunde inte skapa kategori";
+    }
+  }
+
+  function openEditCategoryDialog(category: Category) {
+    selectedCategory = category;
+    editCategoryName = category.name;
+    categoryError = null;
+    showEditCategoryDialog = true;
+  }
+
+  async function handleEditCategory() {
+    if (!selectedCategory) return;
+    categoryError = null;
+    try {
+      await categoriesApi.update(selectedCategory.id, {
+        name: editCategoryName,
+      });
+      await productsStore.fetch();
+      showEditCategoryDialog = false;
+      selectedCategory = null;
+    } catch (e) {
+      categoryError =
+        e instanceof Error ? e.message : "Kunde inte uppdatera kategori";
+    }
+  }
+
+  function openDeleteCategoryDialog(category: Category) {
+    selectedCategory = category;
+    categoryError = null;
+    showDeleteCategoryDialog = true;
+  }
+
+  async function handleDeleteCategory() {
+    if (!selectedCategory) return;
+    categoryError = null;
+    try {
+      await categoriesApi.delete(selectedCategory.id);
+      await productsStore.fetch();
+      showDeleteCategoryDialog = false;
+      selectedCategory = null;
+    } catch (e) {
+      categoryError =
+        e instanceof Error
+          ? e.message
+          : "Kan inte ta bort kategori med produkter";
+    }
+  }
+
+  async function moveCategoryUp(index: number) {
+    if (index <= 0) return;
+    const cats = productsStore.categories;
+    const current = cats[index];
+    const previous = cats[index - 1];
+
+    // Swap sort_order values
+    await categoriesApi.update(current.id, { sort_order: previous.sort_order });
+    await categoriesApi.update(previous.id, { sort_order: current.sort_order });
+    await productsStore.fetch();
+  }
+
+  async function moveCategoryDown(index: number) {
+    const cats = productsStore.categories;
+    if (index >= cats.length - 1) return;
+    const current = cats[index];
+    const next = cats[index + 1];
+
+    // Swap sort_order values
+    await categoriesApi.update(current.id, { sort_order: next.sort_order });
+    await categoriesApi.update(next.id, { sort_order: current.sort_order });
+    await productsStore.fetch();
+  }
 </script>
 
 <div class="space-y-4">
@@ -158,6 +261,15 @@
     <h1 class="text-2xl font-bold">Produkter</h1>
 
     <div class="flex gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={() => (showCategoriesDialog = true)}
+      >
+        <FolderOpen class="h-4 w-4 mr-2" />
+        Kategorier
+      </Button>
+
       <Button
         variant={editMode ? "default" : "outline"}
         size="sm"
@@ -366,3 +478,181 @@
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
+
+<!-- Categories management dialog -->
+<Dialog.Root bind:open={showCategoriesDialog}>
+  <Dialog.Content class="max-w-md">
+    <Dialog.Header>
+      <Dialog.Title>Hantera kategorier</Dialog.Title>
+    </Dialog.Header>
+    <div class="py-4 space-y-1 max-h-[60vh] overflow-y-auto">
+      {#each productsStore.categories as category, index (category.id)}
+        <div
+          class="flex items-center justify-between p-2 rounded-md hover:bg-accent"
+        >
+          <span class="text-sm font-medium">{category.name}</span>
+          <div class="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8"
+              onclick={() => moveCategoryUp(index)}
+              disabled={index === 0}
+            >
+              <ChevronUp class="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8"
+              onclick={() => moveCategoryDown(index)}
+              disabled={index === productsStore.categories.length - 1}
+            >
+              <ChevronDown class="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8"
+              onclick={() => openEditCategoryDialog(category)}
+            >
+              <Pencil class="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onclick={() => openDeleteCategoryDialog(category)}
+            >
+              <Trash2 class="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      {/each}
+      {#if productsStore.categories.length === 0}
+        <p class="text-sm text-muted-foreground text-center py-4">
+          Inga kategorier
+        </p>
+      {/if}
+    </div>
+    <Dialog.Footer>
+      <Button variant="outline" onclick={() => (showCategoriesDialog = false)}
+        >Stäng</Button
+      >
+      <Button onclick={() => (showAddCategoryDialog = true)}>
+        <Plus class="h-4 w-4 mr-2" />
+        Ny kategori
+      </Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
+<!-- Add category dialog -->
+<Dialog.Root bind:open={showAddCategoryDialog}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Ny kategori</Dialog.Title>
+    </Dialog.Header>
+    <div class="space-y-4 py-4">
+      <div class="space-y-2">
+        <Label for="new-category-name">Namn</Label>
+        <Input
+          id="new-category-name"
+          bind:value={newCategoryName}
+          placeholder="T.ex. Mejeri"
+          onkeydown={(e) =>
+            e.key === "Enter" &&
+            newCategoryName.trim() &&
+            handleCreateCategory()}
+        />
+      </div>
+      {#if categoryError}
+        <p class="text-sm text-destructive">{categoryError}</p>
+      {/if}
+    </div>
+    <Dialog.Footer>
+      <Button
+        variant="outline"
+        onclick={() => {
+          showAddCategoryDialog = false;
+          newCategoryName = "";
+          categoryError = null;
+        }}>Avbryt</Button
+      >
+      <Button onclick={handleCreateCategory} disabled={!newCategoryName.trim()}
+        >Lägg till</Button
+      >
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
+<!-- Edit category dialog -->
+<Dialog.Root bind:open={showEditCategoryDialog}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Redigera kategori</Dialog.Title>
+    </Dialog.Header>
+    <div class="space-y-4 py-4">
+      <div class="space-y-2">
+        <Label for="edit-category-name">Namn</Label>
+        <Input
+          id="edit-category-name"
+          bind:value={editCategoryName}
+          onkeydown={(e) =>
+            e.key === "Enter" &&
+            editCategoryName.trim() &&
+            handleEditCategory()}
+        />
+      </div>
+      {#if categoryError}
+        <p class="text-sm text-destructive">{categoryError}</p>
+      {/if}
+    </div>
+    <Dialog.Footer>
+      <Button
+        variant="outline"
+        onclick={() => {
+          showEditCategoryDialog = false;
+          selectedCategory = null;
+          categoryError = null;
+        }}>Avbryt</Button
+      >
+      <Button onclick={handleEditCategory} disabled={!editCategoryName.trim()}
+        >Spara</Button
+      >
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
+<!-- Delete category dialog -->
+<AlertDialog.Root bind:open={showDeleteCategoryDialog}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Ta bort kategori?</AlertDialog.Title>
+      <AlertDialog.Description>
+        Är du säker på att du vill ta bort kategorin "{selectedCategory?.name}"?
+        Kategorin kan bara tas bort om den inte innehåller några produkter.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    {#if categoryError}
+      <p class="text-sm text-destructive">{categoryError}</p>
+    {/if}
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel
+        onclick={() => {
+          showDeleteCategoryDialog = false;
+          selectedCategory = null;
+          categoryError = null;
+        }}
+      >
+        Avbryt
+      </AlertDialog.Cancel>
+      <AlertDialog.Action
+        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        onclick={handleDeleteCategory}
+      >
+        Ta bort
+      </AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

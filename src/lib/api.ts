@@ -34,6 +34,25 @@ export const productsApi = {
   getCategories: () => fetchJson<Category[]>(`${API_BASE}/products/categories`),
 };
 
+// Categories API
+export const categoriesApi = {
+  getAll: () => fetchJson<Category[]>(`${API_BASE}/products/categories`),
+  create: (data: { name: string; sort_order?: number }) =>
+    fetchJson<Category>(`${API_BASE}/products/categories`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (id: number, data: { name?: string; sort_order?: number }) =>
+    fetchJson<Category>(`${API_BASE}/products/categories/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  delete: (id: number) =>
+    fetchJson<{ message: string }>(`${API_BASE}/products/categories/${id}`, {
+      method: "DELETE",
+    }),
+};
+
 // Shopping API
 export const shoppingApi = {
   getAll: () => fetchJson<ShoppingItem[]>(`${API_BASE}/shopping`),

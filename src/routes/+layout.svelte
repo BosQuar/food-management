@@ -106,7 +106,7 @@
     <!-- Offline banner -->
     {#if !online}
       <div
-        class="flex items-center justify-center gap-2 bg-yellow-500 px-4 py-2 text-sm text-white"
+        class="flex items-center justify-center gap-2 bg-yellow-500 px-4 py-2 text-sm text-white sticky top-0 z-50"
       >
         <WifiOff class="h-4 w-4" />
         <span>Du är offline - ändringar synkas när du är online igen</span>
@@ -114,7 +114,7 @@
     {/if}
 
     <!-- Header for desktop -->
-    <header class="hidden border-b bg-card md:block">
+    <header class="hidden border-b bg-card md:block sticky top-0 z-40">
       <div class="container mx-auto flex h-14 items-center px-4">
         <a
           href="/"

@@ -304,4 +304,95 @@ router.get("/categories", (req, res) => {
   res.json(categories);
 });
 
+// POST /api/categories - skapa ny kategori
+router.post("/categories", (req, res) => {
+  const db = getDb();
+  const { name, sort_order } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: "Name is required" });
+  }
+
+  // Get max sort_order if not provided
+  const maxOrder = db
+    .prepare("SELECT MAX(sort_order) as max FROM store_categories")
+    .get();
+  const newSortOrder = sort_order ?? (maxOrder.max || 0) + 1;
+
+  const result = db
+    .prepare("INSERT INTO store_categories (name, sort_order) VALUES (?, ?)")
+    .run(name, newSortOrder);
+
+  const category = db
+    .prepare("SELECT * FROM store_categories WHERE id = ?")
+    .get(result.lastInsertRowid);
+
+  // Auto-create "Sällansaker" for the new category
+  db.prepare(
+    "INSERT INTO products (name, store_category_id, default_unit, is_misc) VALUES (?, ?, ?, ?)",
+  ).run("Sällansaker", category.id, "st", 1);
+
+  res.status(201).json(category);
+});
+
+// PUT /api/categories/:id - uppdatera kategori
+router.put("/categories/:id", (req, res) => {
+  const db = getDb();
+  const { id } = req.params;
+  const { name, sort_order } = req.body;
+
+  const existing = db
+    .prepare("SELECT * FROM store_categories WHERE id = ?")
+    .get(id);
+  if (!existing) {
+    return res.status(404).json({ error: "Category not found" });
+  }
+
+  db.prepare(
+    "UPDATE store_categories SET name = ?, sort_order = ? WHERE id = ?",
+  ).run(name ?? existing.name, sort_order ?? existing.sort_order, id);
+
+  const updated = db
+    .prepare("SELECT * FROM store_categories WHERE id = ?")
+    .get(id);
+
+  res.json(updated);
+});
+
+// DELETE /api/categories/:id - ta bort kategori
+router.delete("/categories/:id", (req, res) => {
+  const db = getDb();
+  const { id } = req.params;
+
+  const existing = db
+    .prepare("SELECT * FROM store_categories WHERE id = ?")
+    .get(id);
+  if (!existing) {
+    return res.status(404).json({ error: "Category not found" });
+  }
+
+  // Check if category has non-misc products (exclude Sällansaker)
+  const productCount = db
+    .prepare(
+      "SELECT COUNT(*) as count FROM products WHERE store_category_id = ? AND is_misc = 0",
+    )
+    .get(id);
+  if (productCount.count > 0) {
+    return res.status(400).json({
+      error:
+        "Cannot delete category with products. Move or delete products first.",
+    });
+  }
+
+  // Delete misc products (Sällansaker) for this category
+  db.prepare(
+    "DELETE FROM products WHERE store_category_id = ? AND is_misc = 1",
+  ).run(id);
+
+  // Delete the category
+  db.prepare("DELETE FROM store_categories WHERE id = ?").run(id);
+
+  res.json({ message: "Category deleted", id: parseInt(id) });
+});
+
 export default router;
