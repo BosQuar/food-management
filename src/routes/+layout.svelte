@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
   import { browser, dev } from "$app/environment";
   import "../app.css";
   import { page } from "$app/stores";
@@ -7,9 +8,14 @@
     ShoppingCart,
     Package,
     BookOpen,
-    Star,
+    Menu,
     WifiOff,
+    Star,
+    Download,
+    LogOut,
   } from "@lucide/svelte";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import { Button } from "$lib/components/ui/button";
   import { initOfflineDB, isOnline } from "$lib/db/idb";
 
   let { children } = $props();
@@ -23,7 +29,6 @@
     { href: "/", label: "Inköpslista", icon: ShoppingCart },
     { href: "/products", label: "Produkter", icon: Package },
     { href: "/recipes", label: "Recept", icon: BookOpen },
-    { href: "/staples", label: "Basvaror", icon: Star },
   ];
 
   function handleTitleClick() {
@@ -32,6 +37,11 @@
       localStorage.setItem(AUTH_KEY, "true");
       authenticated = true;
     }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem(AUTH_KEY);
+    authenticated = false;
   }
 
   onMount(async () => {
@@ -107,7 +117,7 @@
     <header class="hidden border-b bg-card md:block">
       <div class="container mx-auto flex h-14 items-center px-4">
         <h1 class="text-lg font-semibold">Matplanering</h1>
-        <nav class="ml-8 flex gap-6">
+        <nav class="ml-8 flex flex-1 gap-6">
           {#each navItems as item}
             <a
               href={item.href}
@@ -121,6 +131,31 @@
             </a>
           {/each}
         </nav>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+              <Button variant="ghost" size="sm" {...props}>
+                <Menu class="h-4 w-4 mr-2" />
+                Meny
+              </Button>
+            {/snippet}
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content align="end">
+            <DropdownMenu.Item onclick={() => goto("/staples")}>
+              <Star class="h-4 w-4 mr-2" />
+              Basvaror
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onclick={() => goto("/data")}>
+              <Download class="h-4 w-4 mr-2" />
+              Export/import
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item onclick={handleLogout}>
+              <LogOut class="h-4 w-4 mr-2" />
+              Logga ut
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </div>
     </header>
 
@@ -146,6 +181,34 @@
             <span class="text-xs font-medium">{item.label}</span>
           </a>
         {/each}
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+              <button
+                class="flex flex-1 flex-col items-center justify-center gap-1 py-2 text-muted-foreground transition-colors"
+                {...props}
+              >
+                <Menu class="h-5 w-5" />
+                <span class="text-xs font-medium">Meny</span>
+              </button>
+            {/snippet}
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content side="top" align="end">
+            <DropdownMenu.Item onclick={() => goto("/staples")}>
+              <Star class="h-4 w-4 mr-2" />
+              Basvaror
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onclick={() => goto("/data")}>
+              <Download class="h-4 w-4 mr-2" />
+              Export/import
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item onclick={handleLogout}>
+              <LogOut class="h-4 w-4 mr-2" />
+              Logga ut
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </div>
     </nav>
   </div>
