@@ -23,10 +23,14 @@
   <Checkbox
     checked={isDone}
     onCheckedChange={() => onToggle(item.id)}
-    class="h-5 w-5"
+    class="h-5 w-5 cursor-pointer"
   />
 
-  <div class="flex-1 min-w-0">
+  <button
+    type="button"
+    class="flex-1 min-w-0 text-left cursor-pointer"
+    onclick={() => onToggle(item.id)}
+  >
     <p class="text-sm {isDone ? 'line-through text-muted-foreground' : ''}">
       <span class="font-medium">{displayName}</span>
       {#if item.notes}
@@ -39,7 +43,7 @@
         {item.unit}
       </p>
     {/if}
-  </div>
+  </button>
 
   <Button
     variant="ghost"

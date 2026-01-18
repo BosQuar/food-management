@@ -266,37 +266,61 @@
                 <div
                   class="flex items-center gap-2 py-2 hover:bg-accent/50 rounded-md px-1 -mx-1 transition-colors group"
                 >
-                  <div
-                    class="flex-1 min-w-0 {!editMode ? 'cursor-pointer' : ''}"
-                    onclick={() => !editMode && handleAdd(product)}
-                    onkeydown={(e) =>
-                      !editMode && e.key === "Enter" && handleAdd(product)}
-                    role={!editMode ? "button" : undefined}
-                    tabindex={!editMode ? 0 : undefined}
-                  >
-                    <div class="flex items-center gap-1.5">
-                      <p
-                        class="text-sm font-medium truncate group-hover:font-semibold {inList
-                          ? 'text-green-600'
-                          : ''}"
-                      >
-                        {product.name}
-                      </p>
-                      {#if inList}
-                        <ShoppingCart
-                          class="h-3.5 w-3.5 text-green-600 shrink-0"
-                        />
-                        {#if inList.quantity !== null}
-                          <span class="text-xs text-green-600"
-                            >({inList.quantity})</span
-                          >
+                  {#if !editMode}
+                    <button
+                      type="button"
+                      class="flex-1 min-w-0 text-left cursor-pointer"
+                      onclick={() => handleAdd(product)}
+                    >
+                      <div class="flex items-center gap-1.5">
+                        <p
+                          class="text-sm font-medium truncate group-hover:font-semibold {inList
+                            ? 'text-green-600'
+                            : ''}"
+                        >
+                          {product.name}
+                        </p>
+                        {#if inList}
+                          <ShoppingCart
+                            class="h-3.5 w-3.5 text-green-600 shrink-0"
+                          />
+                          {#if inList.quantity !== null}
+                            <span class="text-xs text-green-600"
+                              >({inList.quantity})</span
+                            >
+                          {/if}
                         {/if}
-                      {/if}
+                      </div>
+                      <p class="text-xs text-muted-foreground">
+                        {product.default_unit}
+                      </p>
+                    </button>
+                  {:else}
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-1.5">
+                        <p
+                          class="text-sm font-medium truncate group-hover:font-semibold {inList
+                            ? 'text-green-600'
+                            : ''}"
+                        >
+                          {product.name}
+                        </p>
+                        {#if inList}
+                          <ShoppingCart
+                            class="h-3.5 w-3.5 text-green-600 shrink-0"
+                          />
+                          {#if inList.quantity !== null}
+                            <span class="text-xs text-green-600"
+                              >({inList.quantity})</span
+                            >
+                          {/if}
+                        {/if}
+                      </div>
+                      <p class="text-xs text-muted-foreground">
+                        {product.default_unit}
+                      </p>
                     </div>
-                    <p class="text-xs text-muted-foreground">
-                      {product.default_unit}
-                    </p>
-                  </div>
+                  {/if}
 
                   {#if editMode}
                     <!-- Edit mode: show edit/delete buttons -->

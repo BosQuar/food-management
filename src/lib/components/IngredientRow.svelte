@@ -41,10 +41,16 @@
     isLast = false,
   }: Props = $props();
 
-  let useCustom = $state(!ingredient.product_id);
-  let selectedProductId = $state(ingredient.product_id?.toString() || "");
+  let useCustom = $state(false);
+  let selectedProductId = $state("");
   let open = $state(false);
   let searchValue = $state("");
+
+  // Sync local state when ingredient prop changes
+  $effect(() => {
+    useCustom = !ingredient.product_id;
+    selectedProductId = ingredient.product_id?.toString() || "";
+  });
 
   const selectedProduct = $derived(
     products.find((p) => p.id.toString() === selectedProductId),

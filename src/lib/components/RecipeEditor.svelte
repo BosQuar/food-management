@@ -43,24 +43,33 @@
     tagsStore.fetch();
   });
 
-  let name = $state(recipe?.name || "");
-  let selectedTagIds = $state<number[]>(recipe?.tags?.map((t) => t.id) || []);
-  let description = $state(recipe?.description || "");
-  let servings = $state(recipe?.servings || 4);
-  let instructions = $state(recipe?.instructions || "");
-  let sourceUrl = $state(recipe?.source_url || "");
+  let name = $state("");
+  let selectedTagIds = $state<number[]>([]);
+  let description = $state("");
+  let servings = $state(4);
+  let instructions = $state("");
+  let sourceUrl = $state("");
   let importUrl = $state("");
   let importing = $state(false);
   let importError = $state("");
-  let ingredients = $state<Ingredient[]>(
-    recipe?.ingredients.map((i) => ({
+  let ingredients = $state<Ingredient[]>([{}]);
+
+  // Sync local state when recipe prop changes
+  $effect(() => {
+    name = recipe?.name || "";
+    selectedTagIds = recipe?.tags?.map((t) => t.id) || [];
+    description = recipe?.description || "";
+    servings = recipe?.servings || 4;
+    instructions = recipe?.instructions || "";
+    sourceUrl = recipe?.source_url || "";
+    ingredients = recipe?.ingredients.map((i) => ({
       product_id: i.product_id || undefined,
       custom_name: i.custom_name || undefined,
       amount: i.amount || undefined,
       unit: i.unit || undefined,
       sort_order: i.sort_order,
-    })) || [{}],
-  );
+    })) || [{}];
+  });
 
   async function handleImport() {
     if (!importUrl.trim()) return;
