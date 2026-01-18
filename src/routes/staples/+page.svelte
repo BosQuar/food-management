@@ -104,8 +104,8 @@
             <Label>Kategori</Label>
             <Select.Root type="single" bind:value={newProductCategory}>
               <Select.Trigger class="w-full">
-                {categories.find((c) => c.value === newProductCategory)?.label ||
-                  "Välj kategori"}
+                {categories.find((c) => c.value === newProductCategory)
+                  ?.label || "Välj kategori"}
               </Select.Trigger>
               <Select.Content>
                 {#each categories as cat}
@@ -119,8 +119,9 @@
           <Button variant="outline" onclick={() => (showAddDialog = false)}
             >Avbryt</Button
           >
-          <Button onclick={handleCreateProduct} disabled={!newProductName.trim()}
-            >Lägg till</Button
+          <Button
+            onclick={handleCreateProduct}
+            disabled={!newProductName.trim()}>Lägg till</Button
           >
         </Dialog.Footer>
       </Dialog.Content>
@@ -158,8 +159,12 @@
     <div class="space-y-6">
       <!-- Current staples section -->
       <Collapsible.Root bind:open={staplesOpen}>
-        <Collapsible.Trigger class="flex w-full items-center justify-between py-2">
-          <h2 class="text-sm font-medium text-muted-foreground flex items-center gap-2">
+        <Collapsible.Trigger
+          class="flex w-full items-center justify-between py-2"
+        >
+          <h2
+            class="text-sm font-medium text-muted-foreground flex items-center gap-2"
+          >
             <Star class="h-4 w-4" />
             Aktuella basvaror ({staples.length})
           </h2>
@@ -172,7 +177,8 @@
         <Collapsible.Content>
           {#if staples.length === 0}
             <p class="text-sm text-muted-foreground py-4">
-              Inga basvaror ännu. Lägg till produkter nedan som du alltid har hemma.
+              Inga basvaror ännu. Lägg till produkter nedan som du alltid har
+              hemma.
             </p>
           {:else}
             <div class="space-y-1 pt-2">
@@ -197,7 +203,9 @@
 
       <!-- Add staples section -->
       <Collapsible.Root bind:open={addOpen}>
-        <Collapsible.Trigger class="flex w-full items-center justify-between py-2">
+        <Collapsible.Trigger
+          class="flex w-full items-center justify-between py-2"
+        >
           <h2 class="text-sm font-medium text-muted-foreground">
             Lägg till basvaror
           </h2>

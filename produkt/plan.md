@@ -138,6 +138,7 @@ CREATE TABLE sync_log (
 ```
 
 **Förenklingar jämfört med original:**
+
 - Borttaget: `recipe_categories` (inga taggar/kategorier på recept)
 - Borttaget: `is_frequent` på products (inte behövt)
 - Borttaget: `is_added` på shopping_items (items skapas/tas bort istället)
@@ -148,6 +149,7 @@ CREATE TABLE sync_log (
 ## 3. API-endpoints
 
 ### Produkter
+
 ```
 GET    /api/products              # Lista alla (grupperat per kategori)
 POST   /api/products              # Skapa ny
@@ -158,6 +160,7 @@ POST   /api/products/import       # Importera produktlista (JSON)
 ```
 
 ### Inköpslista
+
 ```
 GET    /api/shopping              # Hämta aktiv lista
 POST   /api/shopping              # Lägg till produkt
@@ -168,6 +171,7 @@ POST   /api/shopping/reset        # Återställ hela listan (tar bort alla)
 ```
 
 ### Recept
+
 ```
 GET    /api/recipes               # Lista alla
 GET    /api/recipes/:id           # Hämta ett
@@ -179,12 +183,14 @@ POST   /api/recipes/:id/to-shopping # Lägg ingredienser på listan
 ```
 
 ### Backup
+
 ```
 GET    /api/backup                # Exportera all data (JSON)
 POST   /api/restore               # Importera all data (JSON)
 ```
 
 ### WebSocket
+
 ```
 WS /ws → realtidssynk mellan klienter
 ```
@@ -194,6 +200,7 @@ WS /ws → realtidssynk mellan klienter
 ## 4. Vyer & UI (Mobile-first)
 
 ### 4.1 Inköpslista (`/`) - Huvudvy
+
 - Visa alla `shopping_items` grupperat per `store_category`
 - Sorterat: kategori (sort_order) → done-status → namn
 - Varje rad visar: checkbox, namn, quantity+unit, notes
@@ -202,6 +209,7 @@ WS /ws → realtidssynk mellan klienter
 - Knapp "Återställ lista" → tar bort alla items
 
 ### 4.2 Produktkatalog (`/products`)
+
 - Sökfält med filter
 - Lista alla produkter grupperat per kategori
 - Klick på produkt → lägg till på inköpslistan (med quantity/unit dialog)
@@ -209,11 +217,13 @@ WS /ws → realtidssynk mellan klienter
 - Swipe/knapp för att redigera/ta bort produkt
 
 ### 4.3 Receptlista (`/recipes`)
+
 - Lista alla recept som kort
 - Varje kort: namn, antal ingredienser
 - Klick → visa recept
 
 ### 4.4 Receptvy (`/recipes/[id]`)
+
 - Titel
 - Portioner med +/- knappar (skalning)
 - Ingredienslista (skalade mängder)
@@ -222,6 +232,7 @@ WS /ws → realtidssynk mellan klienter
 - Redigera/ta bort knappar
 
 ### 4.5 Nytt/redigera recept (`/recipes/new`, `/recipes/[id]/edit`)
+
 - Titel-fält
 - URL-import knapp (parsar och fyller i)
 - Portioner (antal)
@@ -250,17 +261,17 @@ src/lib/components/
 
 ```javascript
 // stores/products.js
-export const products = writable([])
-export const categories = writable([])
+export const products = writable([]);
+export const categories = writable([]);
 
 // stores/shopping.js
-export const shoppingItems = writable([])
+export const shoppingItems = writable([]);
 
 // stores/recipes.js
-export const recipes = writable([])
+export const recipes = writable([]);
 
 // stores/sync.js
-export const syncStatus = writable({ connected: false, pending: 0 })
+export const syncStatus = writable({ connected: false, pending: 0 });
 ```
 
 ---
@@ -268,16 +279,19 @@ export const syncStatus = writable({ connected: false, pending: 0 })
 ## 7. Offline & Sync
 
 ### IndexedDB
+
 - Speglar SQLite lokalt
 - Alla ändringar skrivs till IDB först
 - Synkas till server när online
 
 ### WebSocket
+
 - Broadcast ändringar till alla anslutna klienter
 - Reconnect med exponential backoff
 - Konflikthantering: senaste ändring vinner (timestamp)
 
 ### Service Worker
+
 - Cachar statiska assets
 - Cachar API-responses
 - Serverar från cache när offline
@@ -299,7 +313,7 @@ CMD ["node", "server/index.js"]
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 services:
   app:
     build: .
@@ -315,28 +329,33 @@ services:
 ## 9. Implementationsordning
 
 ### Fas 1: Grundstruktur
+
 1. Initiera SvelteKit-projekt
 2. Installera shadcn-svelte
 3. Sätt upp SQLite + schema
 4. Importera initial produktdata (från tidigare CSV)
 
 ### Fas 2: Backend
+
 5. Express server med alla API-routes
 6. WebSocket för realtidssynk
 
 ### Fas 3: Frontend
+
 7. Layout med navigation (mobile-first, bottom nav)
 8. Inköpslista-vy
 9. Produktkatalog-vy
 10. Recept-vyer (lista, visa, redigera)
 
 ### Fas 4: Avancerat
+
 11. URL-import för recept (JSON-LD parsing)
 12. Portionsskalning
 13. Offline-stöd (Service Worker + IndexedDB)
 14. Export/import funktionalitet
 
 ### Fas 5: Deploy
+
 15. PWA manifest
 16. Docker setup
 17. Testa på mobil

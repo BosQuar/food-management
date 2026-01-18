@@ -3,7 +3,13 @@
   import { browser, dev } from "$app/environment";
   import "../app.css";
   import { page } from "$app/stores";
-  import { ShoppingCart, Package, BookOpen, Star, WifiOff } from "@lucide/svelte";
+  import {
+    ShoppingCart,
+    Package,
+    BookOpen,
+    Star,
+    WifiOff,
+  } from "@lucide/svelte";
   import { initOfflineDB, isOnline } from "$lib/db/idb";
 
   let { children } = $props();

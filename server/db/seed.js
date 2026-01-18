@@ -61,9 +61,24 @@ const products = [
   { name: "Grönskaksbuljong", category: "Kryddor/Oljor", default_unit: "frp" },
   { name: "Kycklingbuljong", category: "Kryddor/Oljor", default_unit: "frp" },
   { name: "Paprikapulver", category: "Kryddor/Oljor", default_unit: "st" },
-  { name: "Salt", category: "Kryddor/Oljor", default_unit: "st", is_staple: true },
-  { name: "Peppar", category: "Kryddor/Oljor", default_unit: "st", is_staple: true },
-  { name: "Vatten", category: "Kryddor/Oljor", default_unit: "dl", is_staple: true },
+  {
+    name: "Salt",
+    category: "Kryddor/Oljor",
+    default_unit: "st",
+    is_staple: true,
+  },
+  {
+    name: "Peppar",
+    category: "Kryddor/Oljor",
+    default_unit: "st",
+    is_staple: true,
+  },
+  {
+    name: "Vatten",
+    category: "Kryddor/Oljor",
+    default_unit: "dl",
+    is_staple: true,
+  },
   { name: "Olivolja", category: "Kryddor/Oljor", default_unit: "st" },
   { name: "Rapsolja", category: "Kryddor/Oljor", default_unit: "st" },
 
@@ -81,6 +96,7 @@ const products = [
   { name: "Smör", category: "Mejeri/Ägg", default_unit: "g" },
   { name: "Mjölk", category: "Mejeri/Ägg", default_unit: "l" },
   { name: "Fil", category: "Mejeri/Ägg", default_unit: "l" },
+  { name: "Keso", category: "Mejeri/Ägg", default_unit: "g" },
 
   // 7. Frukt/Grönt
   { name: "Avokado", category: "Frukt/Grönt", default_unit: "st" },
@@ -110,7 +126,13 @@ const products = [
     category: "Torrvaror/Konserver",
     default_unit: "frp",
   },
-  { name: "Socker", category: "Torrvaror/Konserver", default_unit: "frp" },
+  { name: "Socker", category: "Torrvaror/Konserver", default_unit: "dl" },
+  { name: "Kakao", category: "Torrvaror/Konserver", default_unit: "msk" },
+  {
+    name: "Vaniljsocker",
+    category: "Torrvaror/Konserver",
+    default_unit: "tsk",
+  },
   { name: "Mjöl", category: "Torrvaror/Konserver", default_unit: "frp" },
   { name: "Remouladsås", category: "Torrvaror/Konserver", default_unit: "st" },
   { name: "Tomatpuré", category: "Torrvaror/Konserver", default_unit: "st" },
@@ -279,11 +301,64 @@ export function seed(force = false) {
   sweetChiliRecipe.ingredients.forEach((ing, index) => {
     const productId = productMap[ing.name.toLowerCase()] || null;
     const customName = productId ? null : ing.name;
-    insertIngredient.run(recipeId, productId, customName, ing.amount, ing.unit, index);
+    insertIngredient.run(
+      recipeId,
+      productId,
+      customName,
+      ing.amount,
+      ing.unit,
+      index,
+    );
+  });
+
+  // Chokladpudding med keso och banan
+  const chokladpuddingRecipe = {
+    name: "Chokladpudding med keso och banan",
+    description: "En nyttigare chokladpudding med keso och banan.",
+    servings: 4,
+    instructions: `1. Sätt ugnen på 180°C
+2. Mosa bananerna i en bunke
+3. Tillsätt keso, ägg, socker, kakao, vaniljsocker och salt - vispa ihop till en slät smet
+4. Rör ner havregryn
+5. Häll smeten i en smord ugnsform (ca 20x20 cm) eller fyra portionsformar
+6. Grädda i mitten av ugnen 25-30 minuter tills ytan satt sig men mitten fortfarande är lite mjuk
+
+Servera ljummen eller kall med en klick kvarg, grädde eller färska bär.`,
+    ingredients: [
+      { name: "Ägg", amount: 4, unit: "st" },
+      { name: "Keso", amount: 400, unit: "g" },
+      { name: "Banan", amount: 2, unit: "st" },
+      { name: "Havregryn", amount: 1.5, unit: "dl" },
+      { name: "Kakao", amount: 3, unit: "msk" },
+      { name: "Socker", amount: 0.75, unit: "dl" },
+      { name: "Salt", amount: 1, unit: "nypa" },
+      { name: "Vaniljsocker", amount: 1, unit: "tsk" },
+    ],
+  };
+
+  const chokladpuddingResult = insertRecipe.run(
+    chokladpuddingRecipe.name,
+    chokladpuddingRecipe.description,
+    chokladpuddingRecipe.instructions,
+    chokladpuddingRecipe.servings,
+  );
+  const chokladpuddingId = chokladpuddingResult.lastInsertRowid;
+
+  chokladpuddingRecipe.ingredients.forEach((ing, index) => {
+    const productId = productMap[ing.name.toLowerCase()] || null;
+    const customName = productId ? null : ing.name;
+    insertIngredient.run(
+      chokladpuddingId,
+      productId,
+      customName,
+      ing.amount,
+      ing.unit,
+      index,
+    );
   });
 
   console.log(
-    `Seeded ${categories.length} categories, ${products.length} products, and 1 recipe`,
+    `Seeded ${categories.length} categories, ${products.length} products, and 2 recipes`,
   );
 }
 

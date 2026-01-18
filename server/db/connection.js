@@ -32,7 +32,9 @@ function initSchema() {
 function runMigrations() {
   // Migration: Add description column to recipes table
   const recipeColumns = db.prepare("PRAGMA table_info(recipes)").all();
-  const hasDescription = recipeColumns.some((col) => col.name === "description");
+  const hasDescription = recipeColumns.some(
+    (col) => col.name === "description",
+  );
   if (!hasDescription) {
     db.exec("ALTER TABLE recipes ADD COLUMN description TEXT");
     console.log("Migration: Added description column to recipes table");
