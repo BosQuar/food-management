@@ -36,6 +36,264 @@ router.get("/", (req, res) => {
   res.json(recipesWithTags);
 });
 
+// GET /api/recipes/export - exportera alla recept med ingredienser och taggar
+router.get("/export", (req, res) => {
+  const db = getDb();
+
+  const recipes = db.prepare("SELECT * FROM recipes ORDER BY name").all();
+
+  const getIngredients = db.prepare(`
+    SELECT ri.*, p.name as product_name
+    FROM recipe_ingredients ri
+    LEFT JOIN products p ON ri.product_id = p.id
+    WHERE ri.recipe_id = ?
+    ORDER BY ri.sort_order
+  `);
+
+  const getTags = db.prepare(`
+    SELECT t.name FROM tags t
+    JOIN recipe_tags rt ON t.id = rt.tag_id
+    WHERE rt.recipe_id = ?
+    ORDER BY t.name
+  `);
+
+  const exportData = recipes.map((recipe) => {
+    const ingredients = getIngredients.all(recipe.id).map((ing) => ({
+      product_name: ing.product_name || ing.custom_name,
+      custom_name: ing.custom_name,
+      amount: ing.amount,
+      unit: ing.unit,
+      sort_order: ing.sort_order,
+    }));
+
+    const tags = getTags.all(recipe.id).map((t) => t.name);
+
+    return {
+      name: recipe.name,
+      description: recipe.description,
+      instructions: recipe.instructions,
+      servings: recipe.servings,
+      source_url: recipe.source_url,
+      ingredients,
+      tags,
+    };
+  });
+
+  res.json({ recipes: exportData });
+});
+
+// POST /api/recipes/import-merge - importera recept, hoppa över om namn finns
+router.post("/import-merge", (req, res) => {
+  const db = getDb();
+  const { recipes } = req.body;
+
+  if (!recipes || !Array.isArray(recipes)) {
+    return res
+      .status(400)
+      .json({ error: "Missing recipes array in request body" });
+  }
+
+  let imported = 0;
+  let skipped = 0;
+
+  const transaction = db.transaction(() => {
+    // Get existing recipe names
+    const existingRecipes = db
+      .prepare("SELECT name FROM recipes")
+      .all()
+      .map((r) => r.name.toLowerCase());
+
+    // Get product mapping by name
+    const productMap = {};
+    db.prepare("SELECT id, name FROM products")
+      .all()
+      .forEach((p) => {
+        productMap[p.name.toLowerCase()] = p.id;
+      });
+
+    // Get tag mapping by name
+    const tagMap = {};
+    db.prepare("SELECT id, name FROM tags")
+      .all()
+      .forEach((t) => {
+        tagMap[t.name.toLowerCase()] = t.id;
+      });
+
+    const insertRecipe = db.prepare(`
+      INSERT INTO recipes (name, description, instructions, servings, source_url)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const insertIngredient = db.prepare(`
+      INSERT INTO recipe_ingredients (recipe_id, product_id, custom_name, amount, unit, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    const insertTag = db.prepare(
+      "INSERT OR IGNORE INTO tags (name) VALUES (?)",
+    );
+
+    const insertRecipeTag = db.prepare(
+      "INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)",
+    );
+
+    for (const recipe of recipes) {
+      if (existingRecipes.includes(recipe.name.toLowerCase())) {
+        skipped++;
+        continue;
+      }
+
+      // Insert recipe
+      const result = insertRecipe.run(
+        recipe.name,
+        recipe.description || null,
+        recipe.instructions || null,
+        recipe.servings || 4,
+        recipe.source_url || null,
+      );
+      const recipeId = result.lastInsertRowid;
+
+      // Insert ingredients
+      if (recipe.ingredients && Array.isArray(recipe.ingredients)) {
+        recipe.ingredients.forEach((ing, index) => {
+          // Try to find product by name
+          const productId =
+            ing.product_name && productMap[ing.product_name.toLowerCase()]
+              ? productMap[ing.product_name.toLowerCase()]
+              : null;
+
+          insertIngredient.run(
+            recipeId,
+            productId,
+            productId ? null : ing.custom_name || ing.product_name,
+            ing.amount || null,
+            ing.unit || null,
+            ing.sort_order ?? index,
+          );
+        });
+      }
+
+      // Insert tags
+      if (recipe.tags && Array.isArray(recipe.tags)) {
+        for (const tagName of recipe.tags) {
+          // Create tag if not exists
+          insertTag.run(tagName);
+          // Get tag id (might be new or existing)
+          const tag = db
+            .prepare("SELECT id FROM tags WHERE LOWER(name) = LOWER(?)")
+            .get(tagName);
+          if (tag) {
+            insertRecipeTag.run(recipeId, tag.id);
+          }
+        }
+      }
+
+      imported++;
+    }
+  });
+
+  transaction();
+
+  res.json({ imported, skipped });
+});
+
+// POST /api/recipes/parse-freetext - tolka fritext och matcha produkter
+router.post("/parse-freetext", (req, res) => {
+  const db = getDb();
+  const { text } = req.body;
+
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: "Text is required" });
+  }
+
+  try {
+    // Get all products for matching
+    const products = db.prepare("SELECT id, name FROM products").all();
+    const productMap = new Map(
+      products.map((p) => [p.name.toLowerCase(), p.id]),
+    );
+
+    const lines = text
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l);
+    if (lines.length === 0) {
+      return res.status(400).json({ error: "Empty text" });
+    }
+
+    // First non-empty line is the recipe name
+    const name = lines[0];
+
+    // Common units to detect ingredients
+    const unitPattern =
+      /^([\d.,/]+)\s*(dl|cl|ml|l|g|kg|msk|tsk|krm|st|port|paket|burk|förp|nypa)?\s+(.+)$/i;
+    const servingsPattern = /^(\d+)\s*(portioner?|pers|personer?)$/i;
+
+    let servings = 4;
+    const ingredients = [];
+    const instructionLines = [];
+    let foundIngredients = false;
+    let inInstructions = false;
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Check for servings
+      const servingsMatch = line.match(servingsPattern);
+      if (servingsMatch) {
+        servings = parseInt(servingsMatch[1]);
+        continue;
+      }
+
+      // Check if line looks like an ingredient
+      const ingredientMatch = line.match(unitPattern);
+
+      if (ingredientMatch && !inInstructions) {
+        foundIngredients = true;
+        let amount = ingredientMatch[1];
+        // Handle fractions like 1/2
+        if (amount.includes("/")) {
+          const [num, denom] = amount.split("/");
+          amount = parseFloat(num) / parseFloat(denom);
+        } else {
+          amount = parseFloat(amount.replace(",", "."));
+        }
+
+        const unit = ingredientMatch[2] || "st";
+        const ingredientName = ingredientMatch[3].trim();
+
+        // Try to match to a product
+        const productId = productMap.get(ingredientName.toLowerCase());
+
+        ingredients.push({
+          product_id: productId || null,
+          custom_name: productId ? null : ingredientName,
+          amount: isNaN(amount) ? null : amount,
+          unit: unit.toLowerCase(),
+          sort_order: ingredients.length,
+        });
+      } else if (foundIngredients) {
+        // After ingredients, everything is instructions
+        inInstructions = true;
+        instructionLines.push(line);
+      }
+    }
+
+    const instructions = instructionLines.join("\n").trim();
+
+    res.json({
+      name,
+      servings,
+      ingredients,
+      instructions: instructions || null,
+      source_url: null,
+    });
+  } catch (error) {
+    console.error("Freetext parse error:", error);
+    res.status(400).json({ error: "Could not parse recipe text" });
+  }
+});
+
 // POST /api/recipes/import - importera från URL (JSON-LD)
 router.post("/import", async (req, res) => {
   const { url } = req.body;

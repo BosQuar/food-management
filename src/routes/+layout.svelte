@@ -116,7 +116,11 @@
     <!-- Header for desktop -->
     <header class="hidden border-b bg-card md:block">
       <div class="container mx-auto flex h-14 items-center px-4">
-        <h1 class="text-lg font-semibold">Matplanering</h1>
+        <a
+          href="/"
+          class="text-lg font-semibold hover:text-primary transition-colors"
+          >Matplanering</a
+        >
         <nav class="ml-8 flex flex-1 gap-6">
           {#each navItems as item}
             <a

@@ -63,6 +63,83 @@ router.get("/export", (req, res) => {
   res.json({ categories, products });
 });
 
+// POST /api/products/import-merge - importera, hoppa över om namn finns
+router.post("/import-merge", (req, res) => {
+  const db = getDb();
+  const { categories, products } = req.body;
+
+  if (!products) {
+    return res.status(400).json({ error: "Missing products in request body" });
+  }
+
+  let imported = 0;
+  let skipped = 0;
+
+  const transaction = db.transaction(() => {
+    // Import categories if provided (by name, skip if exists)
+    if (categories && Array.isArray(categories)) {
+      const existingCats = db
+        .prepare("SELECT name FROM store_categories")
+        .all()
+        .map((c) => c.name.toLowerCase());
+
+      const insertCat = db.prepare(
+        "INSERT INTO store_categories (name, sort_order) VALUES (?, ?)",
+      );
+
+      for (const cat of categories) {
+        if (!existingCats.includes(cat.name.toLowerCase())) {
+          insertCat.run(cat.name, cat.sort_order || 0);
+        }
+      }
+    }
+
+    // Get category mapping by name
+    const catMap = {};
+    db.prepare("SELECT id, name FROM store_categories")
+      .all()
+      .forEach((c) => {
+        catMap[c.name.toLowerCase()] = c.id;
+      });
+
+    // Import products (by name, skip if exists)
+    const existingProducts = db
+      .prepare("SELECT name FROM products")
+      .all()
+      .map((p) => p.name.toLowerCase());
+
+    const insertProduct = db.prepare(`
+      INSERT INTO products (name, store_category_id, default_unit, default_notes, is_staple)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    for (const prod of products) {
+      if (existingProducts.includes(prod.name.toLowerCase())) {
+        skipped++;
+      } else {
+        // Find category by name if provided
+        let categoryId = prod.store_category_id || null;
+        if (prod.category_name) {
+          categoryId = catMap[prod.category_name.toLowerCase()] || null;
+        }
+
+        insertProduct.run(
+          prod.name,
+          categoryId,
+          prod.default_unit || "st",
+          prod.default_notes || null,
+          prod.is_staple || 0,
+        );
+        imported++;
+      }
+    }
+  });
+
+  transaction();
+
+  res.json({ imported, skipped });
+});
+
 // POST /api/products/import - importera från JSON
 router.post("/import", (req, res) => {
   const db = getDb();
