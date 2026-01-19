@@ -132,3 +132,24 @@ export function getClientCount() {
   }
   return total;
 }
+
+// Close all WebSocket connections and the server
+export function closeWebSocket() {
+  if (!wss) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    // Close all client connections
+    for (const clients of userClients.values()) {
+      for (const client of clients) {
+        client.close(1001, "Server shutting down");
+      }
+    }
+    userClients.clear();
+
+    // Close the WebSocket server
+    wss.close(() => {
+      console.log("WebSocket server closed");
+      resolve();
+    });
+  });
+}

@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { getDb, closeDb } from "./db/connection.js";
 import { seed } from "./db/seed.js";
-import { setupWebSocket } from "./services/sync.js";
+import { setupWebSocket, closeWebSocket } from "./services/sync.js";
 import authRouter from "./routes/auth.js";
 import productsRouter from "./routes/products.js";
 import shoppingRouter from "./routes/shopping.js";
@@ -60,20 +60,42 @@ const server = app.listen(PORT, () => {
 setupWebSocket(server);
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("SIGTERM received, shutting down...");
-  server.close(() => {
-    closeDb();
-    process.exit(0);
-  });
-});
+let isShuttingDown = false;
 
-process.on("SIGINT", () => {
-  console.log("SIGINT received, shutting down...");
-  server.close(() => {
+async function shutdown(signal) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  console.log(`${signal} received, shutting down...`);
+
+  // Force exit after 5 seconds
+  const forceExitTimeout = setTimeout(() => {
+    console.log("Forcing exit...");
+    process.exit(1);
+  }, 5000);
+
+  try {
+    // Close WebSocket connections first
+    await closeWebSocket();
+
+    // Then close HTTP server
+    await new Promise((resolve) => server.close(resolve));
+    console.log("HTTP server closed");
+
+    // Close database
     closeDb();
+    console.log("Database closed");
+
+    clearTimeout(forceExitTimeout);
     process.exit(0);
-  });
-});
+  } catch (err) {
+    console.error("Error during shutdown:", err);
+    clearTimeout(forceExitTimeout);
+    process.exit(1);
+  }
+}
+
+process.once("SIGTERM", () => shutdown("SIGTERM"));
+process.once("SIGINT", () => shutdown("SIGINT"));
 
 export default app;
