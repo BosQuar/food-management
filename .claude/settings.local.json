@@ -6,6 +6,8 @@
       "Bash(npm:*)",
       "Bash(npx:*)",
       "Bash(node *)",
+      "Bash(mkdir *)",
+      "Bash(mkdir:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(pkill *)",

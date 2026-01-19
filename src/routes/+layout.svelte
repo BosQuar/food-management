@@ -13,6 +13,8 @@
     Star,
     Download,
     LogOut,
+    Sun,
+    Moon,
   } from "@lucide/svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Button } from "$lib/components/ui/button";
@@ -22,8 +24,18 @@
   let online = $state(true);
   let authenticated = $state(false);
   let clickCount = $state(0);
+  let darkMode = $state(false);
 
   const AUTH_KEY = "mat_auth";
+  const THEME_KEY = "mat_theme";
+
+  function toggleDarkMode() {
+    darkMode = !darkMode;
+    if (browser) {
+      localStorage.setItem(THEME_KEY, darkMode ? "dark" : "light");
+      document.documentElement.classList.toggle("dark", darkMode);
+    }
+  }
 
   const navItems = [
     { href: "/", label: "Inköpslista", icon: ShoppingCart },
@@ -48,6 +60,17 @@
     // Check authentication
     if (browser) {
       authenticated = localStorage.getItem(AUTH_KEY) === "true";
+
+      // Initialize theme
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (
+        savedTheme === "dark" ||
+        (!savedTheme &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        darkMode = true;
+        document.documentElement.classList.add("dark");
+      }
     }
     // Initialize IndexedDB
     await initOfflineDB();
@@ -153,6 +176,15 @@
               <Download class="h-4 w-4 mr-2" />
               Export/import
             </DropdownMenu.Item>
+            <DropdownMenu.Item onclick={toggleDarkMode}>
+              {#if darkMode}
+                <Sun class="h-4 w-4 mr-2" />
+                Ljust läge
+              {:else}
+                <Moon class="h-4 w-4 mr-2" />
+                Mörkt läge
+              {/if}
+            </DropdownMenu.Item>
             <DropdownMenu.Separator />
             <DropdownMenu.Item onclick={handleLogout}>
               <LogOut class="h-4 w-4 mr-2" />
@@ -205,6 +237,15 @@
             <DropdownMenu.Item onclick={() => goto("/data")}>
               <Download class="h-4 w-4 mr-2" />
               Export/import
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onclick={toggleDarkMode}>
+              {#if darkMode}
+                <Sun class="h-4 w-4 mr-2" />
+                Ljust läge
+              {:else}
+                <Moon class="h-4 w-4 mr-2" />
+                Mörkt läge
+              {/if}
             </DropdownMenu.Item>
             <DropdownMenu.Separator />
             <DropdownMenu.Item onclick={handleLogout}>
