@@ -41,15 +41,22 @@
     isLast = false,
   }: Props = $props();
 
-  let useCustom = $state(false);
-  let selectedProductId = $state("");
+  let useCustom = $state(!ingredient.product_id);
+  let selectedProductId = $state(ingredient.product_id?.toString() || "");
   let open = $state(false);
   let searchValue = $state("");
+  let lastIngredientId = $state(ingredient.product_id);
 
-  // Sync local state when ingredient prop changes
+  // Only sync when ingredient prop actually changes from parent (not from our own updates)
   $effect(() => {
-    useCustom = !ingredient.product_id;
-    selectedProductId = ingredient.product_id?.toString() || "";
+    if (ingredient.product_id !== lastIngredientId) {
+      lastIngredientId = ingredient.product_id;
+      selectedProductId = ingredient.product_id?.toString() || "";
+      // Only auto-set useCustom if we're receiving a product_id
+      if (ingredient.product_id) {
+        useCustom = false;
+      }
+    }
   });
 
   const selectedProduct = $derived(
