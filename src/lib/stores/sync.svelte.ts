@@ -111,13 +111,13 @@ export function getSyncStore() {
           break;
 
         case "shopping_change":
-          // Refresh shopping list on any change
-          shoppingStore.fetch();
+          // Silently refresh shopping list to avoid UI flash
+          shoppingStore.silentRefresh();
           break;
 
         case "products_change":
-          // Refresh products on any change
-          productsStore.fetch();
+          // Silently refresh products to avoid UI flash
+          productsStore.silentRefresh();
           break;
 
         case "recipes_change":

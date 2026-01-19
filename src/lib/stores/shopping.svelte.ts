@@ -50,6 +50,19 @@ export function getShoppingStore() {
       }
     },
 
+    // Silent refresh - updates data without showing loading state
+    // Used for WebSocket sync to avoid UI flash
+    async silentRefresh() {
+      try {
+        const data = await shoppingApi.getAll();
+        items = data;
+        await shoppingDB.bulkReplace(data);
+      } catch (e) {
+        // Silently fail - data will sync on next refresh
+        console.error("Silent refresh failed:", e);
+      }
+    },
+
     async add(data: AddShoppingItem) {
       try {
         const item = await shoppingApi.add(data);

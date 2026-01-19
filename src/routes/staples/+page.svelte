@@ -13,7 +13,7 @@
   let searchQuery = $state("");
   let showAddDialog = $state(false);
   let staplesOpen = $state(true);
-  let addOpen = $state(true);
+  let addOpen = $state(false);
 
   let newProductName = $state("");
   let newProductUnit = $state("st");

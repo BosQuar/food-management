@@ -78,6 +78,40 @@
   const allCollapsed = $derived(
     collapsedCategories.size === groupedItems.length && groupedItems.length > 0,
   );
+
+  // Calculate done count per category
+  function getCategoryStats(items: ShoppingItemType[]) {
+    const doneCount = items.filter((i) => i.is_done).length;
+    return { doneCount, totalCount: items.length };
+  }
+
+  // Wrap onToggle to auto-collapse category when all items are done
+  function handleToggle(
+    id: number,
+    categoryName: string,
+    items: ShoppingItemType[],
+  ) {
+    // Find the item being toggled
+    const item = items.find((i) => i.id === id);
+    if (!item) {
+      onToggle(id);
+      return;
+    }
+
+    // If item is not done and will become done, check if it's the last one
+    if (!item.is_done) {
+      const currentDoneCount = items.filter((i) => i.is_done).length;
+      // If this toggle will complete all items in the category, collapse it
+      if (currentDoneCount + 1 === items.length) {
+        // Small delay to let the UI update first
+        setTimeout(() => {
+          uiStore.collapseShoppingCategory(categoryName);
+        }, 300);
+      }
+    }
+
+    onToggle(id);
+  }
 </script>
 
 {#if groupedItems.length === 0}
@@ -110,7 +144,8 @@
               <ChevronDown class="h-4 w-4" />
             {/if}
             {categoryName}
-            <span class="text-xs">({items.length})</span>
+            {@const stats = getCategoryStats(items)}
+            <span class="text-xs">({stats.doneCount}/{stats.totalCount})</span>
           </CardTitle>
         </CardHeader>
         {#if !collapsedCategories.has(categoryName)}
@@ -119,7 +154,7 @@
               {#each items as item (item.id)}
                 <ShoppingItem
                   {item}
-                  {onToggle}
+                  onToggle={(id) => handleToggle(id, categoryName, items)}
                   {onDelete}
                   onEditNotes={openNotesDialog}
                 />

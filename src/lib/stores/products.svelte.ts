@@ -63,6 +63,24 @@ export function getProductsStore() {
       }
     },
 
+    // Silent refresh - updates data without showing loading state
+    // Used for WebSocket sync to avoid UI flash
+    async silentRefresh() {
+      try {
+        const data = await productsApi.getAll();
+        categories = data;
+        const allProducts = data.flatMap((c) => c.products);
+        const cats = data.map(({ products, ...cat }) => cat);
+        await Promise.all([
+          categoriesDB.bulkReplace(cats),
+          productsDB.bulkReplace(allProducts),
+        ]);
+      } catch (e) {
+        // Silently fail - data will sync on next refresh
+        console.error("Silent refresh failed:", e);
+      }
+    },
+
     async create(data: CreateProduct) {
       try {
         const product = await productsApi.create(data);
