@@ -63,7 +63,9 @@ router.post("/login", (req, res) => {
 
   const db = getDb();
   const user = db
-    .prepare("SELECT id, username, password_hash FROM users WHERE username = ?")
+    .prepare(
+      "SELECT id, username, password_hash, auth_token FROM users WHERE username = ?",
+    )
     .get(username);
 
   if (!user) {
@@ -80,12 +82,15 @@ router.post("/login", (req, res) => {
       .json({ error: "Felaktigt användarnamn eller lösenord" });
   }
 
-  // Generate new token
-  const authToken = crypto.randomBytes(32).toString("hex");
-  db.prepare("UPDATE users SET auth_token = ? WHERE id = ?").run(
-    authToken,
-    user.id,
-  );
+  // Reuse existing token if available, otherwise generate new one
+  let authToken = user.auth_token;
+  if (!authToken) {
+    authToken = crypto.randomBytes(32).toString("hex");
+    db.prepare("UPDATE users SET auth_token = ? WHERE id = ?").run(
+      authToken,
+      user.id,
+    );
+  }
 
   res.json({
     id: user.id,
