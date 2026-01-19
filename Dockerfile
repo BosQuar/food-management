@@ -18,6 +18,9 @@ COPY . .
 # Build the SvelteKit app
 RUN npm run build
 
+# Build the server TypeScript
+RUN npm run build:server
+
 # Production stage
 FROM node:20-alpine
 
@@ -36,8 +39,8 @@ RUN npm ci --omit=dev && \
 # Copy built assets from builder
 COPY --from=builder /app/build ./build
 
-# Copy server files
-COPY --from=builder /app/server ./server
+# Copy server files (compiled JS + SQL schema already included from build:server)
+COPY --from=builder /app/server/dist ./server/dist
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
@@ -54,4 +57,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8500/api/health || exit 1
 
 # Start the server
-CMD ["node", "server/index.js"]
+CMD ["node", "server/dist/server/index.js"]
