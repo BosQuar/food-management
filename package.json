@@ -32,6 +32,7 @@
     "@lucide/svelte": "^0.562.0",
     "@sveltejs/adapter-static": "^3.0.10",
     "@tanstack/table-core": "^8.21.3",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",
     "bits-ui": "^2.15.4",
     "clsx": "^2.1.1",

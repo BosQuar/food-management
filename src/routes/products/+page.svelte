@@ -310,18 +310,34 @@
               />
             </div>
             <div class="space-y-2">
-              <Label>Kategori</Label>
-              <Select.Root type="single" bind:value={newProductCategory}>
-                <Select.Trigger class="w-full">
-                  {categories.find((c) => c.value === newProductCategory)
-                    ?.label || "Välj kategori"}
-                </Select.Trigger>
-                <Select.Content>
-                  {#each categories as cat}
-                    <Select.Item value={cat.value}>{cat.label}</Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
+              <Label>Kategori <span class="text-destructive">*</span></Label>
+              {#if categories.length === 0}
+                <p class="text-sm text-muted-foreground">
+                  Du måste skapa en kategori först.
+                  <button
+                    type="button"
+                    class="text-primary underline"
+                    onclick={() => {
+                      showAddDialog = false;
+                      showCategoriesDialog = true;
+                    }}
+                  >
+                    Skapa kategori
+                  </button>
+                </p>
+              {:else}
+                <Select.Root type="single" bind:value={newProductCategory}>
+                  <Select.Trigger class="w-full">
+                    {categories.find((c) => c.value === newProductCategory)
+                      ?.label || "Välj kategori..."}
+                  </Select.Trigger>
+                  <Select.Content>
+                    {#each categories as cat}
+                      <Select.Item value={cat.value}>{cat.label}</Select.Item>
+                    {/each}
+                  </Select.Content>
+                </Select.Root>
+              {/if}
             </div>
           </div>
           <Dialog.Footer>
@@ -330,7 +346,8 @@
             >
             <Button
               onclick={handleCreateProduct}
-              disabled={!newProductName.trim()}>Lägg till</Button
+              disabled={!newProductName.trim() || !newProductCategory}
+              >Lägg till</Button
             >
           </Dialog.Footer>
         </Dialog.Content>
@@ -422,11 +439,11 @@
         <Input id="edit-unit" bind:value={editProductUnit} />
       </div>
       <div class="space-y-2">
-        <Label>Kategori</Label>
+        <Label>Kategori <span class="text-destructive">*</span></Label>
         <Select.Root type="single" bind:value={editProductCategory}>
           <Select.Trigger class="w-full">
             {categories.find((c) => c.value === editProductCategory)?.label ||
-              "Välj kategori"}
+              "Välj kategori..."}
           </Select.Trigger>
           <Select.Content>
             {#each categories as cat}
@@ -453,7 +470,9 @@
       <Button variant="outline" onclick={() => (showEditDialog = false)}
         >Avbryt</Button
       >
-      <Button onclick={handleEditProduct}>Spara</Button>
+      <Button onclick={handleEditProduct} disabled={!editProductCategory}
+        >Spara</Button
+      >
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

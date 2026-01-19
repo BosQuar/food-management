@@ -1,5 +1,6 @@
 import { shoppingStore } from "./shopping.svelte";
 import { productsStore } from "./products.svelte";
+import { authStore } from "./auth.svelte";
 import { browser } from "$app/environment";
 
 type SyncStatus = "disconnected" | "connecting" | "connected";
@@ -7,7 +8,8 @@ type SyncStatus = "disconnected" | "connecting" | "connected";
 function getWebSocketUrl(): string {
   if (!browser) return "";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/ws`;
+  const token = authStore.token;
+  return `${protocol}//${window.location.host}/ws${token ? `?token=${token}` : ""}`;
 }
 
 let status = $state<SyncStatus>("disconnected");
@@ -27,6 +29,11 @@ export function getSyncStore() {
     },
 
     connect() {
+      // Don't connect if not authenticated
+      if (!authStore.isAuthenticated) {
+        return;
+      }
+
       if (ws?.readyState === WebSocket.OPEN) return;
       if (status === "connecting") return;
 
@@ -50,9 +57,16 @@ export function getSyncStore() {
           }
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
           status = "disconnected";
           ws = null;
+
+          // Don't reconnect if closed due to auth error
+          if (event.code === 4001) {
+            console.log("WebSocket closed due to auth error");
+            return;
+          }
+
           this.scheduleReconnect();
         };
 
@@ -80,6 +94,11 @@ export function getSyncStore() {
     },
 
     scheduleReconnect() {
+      // Don't reconnect if not authenticated
+      if (!authStore.isAuthenticated) {
+        return;
+      }
+
       if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
         console.log("Max reconnect attempts reached");
         return;
@@ -133,6 +152,12 @@ export function getSyncStore() {
       if (ws?.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "ping" }));
       }
+    },
+
+    // Reconnect with new token (after login)
+    reconnect() {
+      this.disconnect();
+      this.connect();
     },
   };
 }

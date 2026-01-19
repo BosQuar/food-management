@@ -1,12 +1,17 @@
 import express from "express";
 import { getDb } from "../db/connection.js";
 import { parseRecipeFromUrl } from "../services/recipe-parser.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
+
+// All routes require authentication
+router.use(requireAuth);
 
 // GET /api/recipes - lista alla
 router.get("/", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
 
   const recipes = db
     .prepare(
@@ -14,11 +19,12 @@ router.get("/", (req, res) => {
 		SELECT r.*, COUNT(ri.id) as ingredient_count
 		FROM recipes r
 		LEFT JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+		WHERE r.user_id = ?
 		GROUP BY r.id
 		ORDER BY r.name
 	`,
     )
-    .all();
+    .all(userId);
 
   // Get tags for each recipe
   const getTagsStmt = db.prepare(`
@@ -39,8 +45,11 @@ router.get("/", (req, res) => {
 // GET /api/recipes/export - exportera alla recept med ingredienser och taggar
 router.get("/export", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
 
-  const recipes = db.prepare("SELECT * FROM recipes ORDER BY name").all();
+  const recipes = db
+    .prepare("SELECT * FROM recipes WHERE user_id = ? ORDER BY name")
+    .all(userId);
 
   const getIngredients = db.prepare(`
     SELECT ri.*, p.name as product_name
@@ -85,6 +94,7 @@ router.get("/export", (req, res) => {
 // POST /api/recipes/import-merge - importera recept, hoppa över om namn finns
 router.post("/import-merge", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { recipes } = req.body;
 
   if (!recipes || !Array.isArray(recipes)) {
@@ -99,29 +109,29 @@ router.post("/import-merge", (req, res) => {
   const transaction = db.transaction(() => {
     // Get existing recipe names
     const existingRecipes = db
-      .prepare("SELECT name FROM recipes")
-      .all()
+      .prepare("SELECT name FROM recipes WHERE user_id = ?")
+      .all(userId)
       .map((r) => r.name.toLowerCase());
 
     // Get product mapping by name
     const productMap = {};
-    db.prepare("SELECT id, name FROM products")
-      .all()
+    db.prepare("SELECT id, name FROM products WHERE user_id = ?")
+      .all(userId)
       .forEach((p) => {
         productMap[p.name.toLowerCase()] = p.id;
       });
 
     // Get tag mapping by name
     const tagMap = {};
-    db.prepare("SELECT id, name FROM tags")
-      .all()
+    db.prepare("SELECT id, name FROM tags WHERE user_id = ?")
+      .all(userId)
       .forEach((t) => {
         tagMap[t.name.toLowerCase()] = t.id;
       });
 
     const insertRecipe = db.prepare(`
-      INSERT INTO recipes (name, description, instructions, servings, source_url)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO recipes (name, description, instructions, servings, source_url, user_id)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     const insertIngredient = db.prepare(`
@@ -130,7 +140,7 @@ router.post("/import-merge", (req, res) => {
     `);
 
     const insertTag = db.prepare(
-      "INSERT OR IGNORE INTO tags (name) VALUES (?)",
+      "INSERT OR IGNORE INTO tags (name, user_id) VALUES (?, ?)",
     );
 
     const insertRecipeTag = db.prepare(
@@ -150,6 +160,7 @@ router.post("/import-merge", (req, res) => {
         recipe.instructions || null,
         recipe.servings || 4,
         recipe.source_url || null,
+        userId,
       );
       const recipeId = result.lastInsertRowid;
 
@@ -177,11 +188,13 @@ router.post("/import-merge", (req, res) => {
       if (recipe.tags && Array.isArray(recipe.tags)) {
         for (const tagName of recipe.tags) {
           // Create tag if not exists
-          insertTag.run(tagName);
+          insertTag.run(tagName, userId);
           // Get tag id (might be new or existing)
           const tag = db
-            .prepare("SELECT id FROM tags WHERE LOWER(name) = LOWER(?)")
-            .get(tagName);
+            .prepare(
+              "SELECT id FROM tags WHERE LOWER(name) = LOWER(?) AND user_id = ?",
+            )
+            .get(tagName, userId);
           if (tag) {
             insertRecipeTag.run(recipeId, tag.id);
           }
@@ -200,6 +213,7 @@ router.post("/import-merge", (req, res) => {
 // POST /api/recipes/parse-freetext - tolka fritext och matcha produkter
 router.post("/parse-freetext", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { text } = req.body;
 
   if (!text || !text.trim()) {
@@ -208,7 +222,9 @@ router.post("/parse-freetext", (req, res) => {
 
   try {
     // Get all products for matching
-    const products = db.prepare("SELECT id, name FROM products").all();
+    const products = db
+      .prepare("SELECT id, name FROM products WHERE user_id = ?")
+      .all(userId);
     const productMap = new Map(
       products.map((p) => [p.name.toLowerCase(), p.id]),
     );
@@ -314,9 +330,12 @@ router.post("/import", async (req, res) => {
 // GET /api/recipes/:id - hämta ett med ingredienser
 router.get("/:id", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { id } = req.params;
 
-  const recipe = db.prepare("SELECT * FROM recipes WHERE id = ?").get(id);
+  const recipe = db
+    .prepare("SELECT * FROM recipes WHERE id = ? AND user_id = ?")
+    .get(id, userId);
   if (!recipe) {
     return res.status(404).json({ error: "Recipe not found" });
   }
@@ -333,7 +352,7 @@ router.get("/:id", (req, res) => {
 				WHEN ri.custom_name IS NOT NULL THEN (
 					SELECT COALESCE(MAX(is_staple), 0)
 					FROM products
-					WHERE LOWER(name) = LOWER(ri.custom_name)
+					WHERE LOWER(name) = LOWER(ri.custom_name) AND user_id = ?
 				)
 				ELSE 0
 			END as is_staple
@@ -343,7 +362,7 @@ router.get("/:id", (req, res) => {
 		ORDER BY ri.sort_order
 	`,
     )
-    .all(id);
+    .all(userId, id);
 
   // Get tags
   const tags = db
@@ -367,6 +386,7 @@ router.get("/:id", (req, res) => {
 // POST /api/recipes - skapa med ingredienser
 router.post("/", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const {
     name,
     description,
@@ -382,8 +402,8 @@ router.post("/", (req, res) => {
   }
 
   const insertRecipe = db.prepare(`
-		INSERT INTO recipes (name, description, instructions, servings, source_url)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO recipes (name, description, instructions, servings, source_url, user_id)
+		VALUES (?, ?, ?, ?, ?, ?)
 	`);
 
   const insertIngredient = db.prepare(`
@@ -398,6 +418,7 @@ router.post("/", (req, res) => {
       instructions || null,
       servings || 4,
       source_url || null,
+      userId,
     );
     const recipeId = result.lastInsertRowid;
 
@@ -460,6 +481,7 @@ router.post("/", (req, res) => {
 // PUT /api/recipes/:id - uppdatera recept + ingredienser
 router.put("/:id", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { id } = req.params;
   const {
     name,
@@ -471,7 +493,9 @@ router.put("/:id", (req, res) => {
     tag_ids,
   } = req.body;
 
-  const existing = db.prepare("SELECT * FROM recipes WHERE id = ?").get(id);
+  const existing = db
+    .prepare("SELECT * FROM recipes WHERE id = ? AND user_id = ?")
+    .get(id, userId);
   if (!existing) {
     return res.status(404).json({ error: "Recipe not found" });
   }
@@ -479,7 +503,7 @@ router.put("/:id", (req, res) => {
   const updateRecipe = db.prepare(`
 		UPDATE recipes
 		SET name = ?, description = ?, instructions = ?, servings = ?, source_url = ?
-		WHERE id = ?
+		WHERE id = ? AND user_id = ?
 	`);
 
   const deleteIngredients = db.prepare(
@@ -499,6 +523,7 @@ router.put("/:id", (req, res) => {
       servings ?? existing.servings,
       source_url ?? existing.source_url,
       id,
+      userId,
     );
 
     if (ingredients && Array.isArray(ingredients)) {
@@ -558,14 +583,20 @@ router.put("/:id", (req, res) => {
 // DELETE /api/recipes/:id - ta bort (CASCADE på ingredienser)
 router.delete("/:id", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { id } = req.params;
 
-  const existing = db.prepare("SELECT * FROM recipes WHERE id = ?").get(id);
+  const existing = db
+    .prepare("SELECT * FROM recipes WHERE id = ? AND user_id = ?")
+    .get(id, userId);
   if (!existing) {
     return res.status(404).json({ error: "Recipe not found" });
   }
 
-  db.prepare("DELETE FROM recipes WHERE id = ?").run(id);
+  db.prepare("DELETE FROM recipes WHERE id = ? AND user_id = ?").run(
+    id,
+    userId,
+  );
 
   res.json({ message: "Recipe deleted", id: parseInt(id) });
 });
@@ -573,10 +604,13 @@ router.delete("/:id", (req, res) => {
 // POST /api/recipes/:id/to-shopping - lägg ingredienser på listan
 router.post("/:id/to-shopping", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { id } = req.params;
   const { scale } = req.body;
 
-  const recipe = db.prepare("SELECT * FROM recipes WHERE id = ?").get(id);
+  const recipe = db
+    .prepare("SELECT * FROM recipes WHERE id = ? AND user_id = ?")
+    .get(id, userId);
   if (!recipe) {
     return res.status(404).json({ error: "Recipe not found" });
   }
@@ -595,8 +629,8 @@ router.post("/:id/to-shopping", (req, res) => {
   const scaleFactor = scale ? scale / recipe.servings : 1;
 
   const insertShoppingItem = db.prepare(`
-		INSERT INTO shopping_items (product_id, custom_name, store_category_id, quantity, unit, notes)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO shopping_items (product_id, custom_name, store_category_id, quantity, unit, notes, user_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`);
 
   const transaction = db.transaction(() => {
@@ -610,6 +644,7 @@ router.post("/:id/to-shopping", (req, res) => {
         quantity,
         ing.unit || ing.default_unit || "st",
         `Från: ${recipe.name}`,
+        userId,
       );
       addedItems.push(result.lastInsertRowid);
     }

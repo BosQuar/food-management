@@ -5,6 +5,7 @@ import { dirname, join } from "path";
 import { getDb, closeDb } from "./db/connection.js";
 import { seed } from "./db/seed.js";
 import { setupWebSocket } from "./services/sync.js";
+import authRouter from "./routes/auth.js";
 import productsRouter from "./routes/products.js";
 import shoppingRouter from "./routes/shopping.js";
 import recipesRouter from "./routes/recipes.js";
@@ -30,6 +31,7 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+app.use("/api/auth", authRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/shopping", shoppingRouter);
 app.use("/api/recipes", recipesRouter);

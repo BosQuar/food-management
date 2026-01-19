@@ -1,4 +1,5 @@
 import { fileURLToPath } from "url";
+import bcrypt from "bcryptjs";
 import { getDb } from "./connection.js";
 
 const categories = [
@@ -129,7 +130,7 @@ const products = [
   { name: "Socker", category: "Torrvaror/Konserver", default_unit: "dl" },
   { name: "Kakao", category: "Torrvaror/Konserver", default_unit: "msk" },
   {
-    name: "Vaniljsocker",
+    name: "Vanilinsocker",
     category: "Torrvaror/Konserver",
     default_unit: "tsk",
   },
@@ -224,24 +225,33 @@ export function seed(force = false) {
     db.prepare("DELETE FROM shopping_items").run();
     db.prepare("DELETE FROM products").run();
     db.prepare("DELETE FROM store_categories").run();
+    db.prepare("DELETE FROM users").run();
   }
 
   console.log("Seeding database...");
 
-  // Insert categories
+  // Create default user "osloh" with password "osloh"
+  const passwordHash = bcrypt.hashSync("osloh", 10);
+  const userResult = db
+    .prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)")
+    .run("osloh", passwordHash);
+  const userId = userResult.lastInsertRowid;
+  console.log(`Created user 'osloh' with id ${userId}`);
+
+  // Insert categories with user_id
   const insertCategory = db.prepare(
-    "INSERT INTO store_categories (name, sort_order) VALUES (?, ?)",
+    "INSERT INTO store_categories (name, sort_order, user_id) VALUES (?, ?, ?)",
   );
   const categoryMap = {};
 
   for (const cat of categories) {
-    const result = insertCategory.run(cat.name, cat.sort_order);
+    const result = insertCategory.run(cat.name, cat.sort_order, userId);
     categoryMap[cat.name] = result.lastInsertRowid;
   }
 
   // Insert products and build name->id map
   const insertProduct = db.prepare(
-    "INSERT INTO products (name, store_category_id, default_unit, is_staple, is_misc) VALUES (?, ?, ?, ?, ?)",
+    "INSERT INTO products (name, store_category_id, default_unit, is_staple, is_misc, user_id) VALUES (?, ?, ?, ?, ?, ?)",
   );
   const productMap = {};
 
@@ -253,6 +263,7 @@ export function seed(force = false) {
       product.default_unit,
       product.is_staple ? 1 : 0,
       0,
+      userId,
     );
     productMap[product.name.toLowerCase()] = result.lastInsertRowid;
   }
@@ -260,23 +271,25 @@ export function seed(force = false) {
   // Insert "Sällansaker" for each category
   for (const cat of categories) {
     const categoryId = categoryMap[cat.name];
-    insertProduct.run("Sällansaker", categoryId, "st", 0, 1);
+    insertProduct.run("Sällansaker", categoryId, "st", 0, 1, userId);
   }
 
-  // Insert tags
-  const insertTag = db.prepare("INSERT INTO tags (name) VALUES (?)");
+  // Insert tags with user_id
+  const insertTag = db.prepare(
+    "INSERT INTO tags (name, user_id) VALUES (?, ?)",
+  );
   const insertRecipeTag = db.prepare(
     "INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)",
   );
 
-  const middagResult = insertTag.run("Middag");
-  const efterrattResult = insertTag.run("Efterrätt");
+  const middagResult = insertTag.run("Middag", userId);
+  const efterrattResult = insertTag.run("Efterrätt", userId);
   const middagTagId = middagResult.lastInsertRowid;
   const efterrattTagId = efterrattResult.lastInsertRowid;
 
-  // Insert recipes
+  // Insert recipes with user_id
   const insertRecipe = db.prepare(
-    "INSERT INTO recipes (name, description, instructions, servings) VALUES (?, ?, ?, ?)",
+    "INSERT INTO recipes (name, description, instructions, servings, user_id) VALUES (?, ?, ?, ?, ?)",
   );
   const insertIngredient = db.prepare(
     "INSERT INTO recipe_ingredients (recipe_id, product_id, custom_name, amount, unit, sort_order) VALUES (?, ?, ?, ?, ?, ?)",
@@ -315,6 +328,7 @@ export function seed(force = false) {
     sweetChiliRecipe.description,
     sweetChiliRecipe.instructions,
     sweetChiliRecipe.servings,
+    userId,
   );
   const recipeId = recipeResult.lastInsertRowid;
 
@@ -355,7 +369,7 @@ Servera ljummen eller kall med en klick kvarg, grädde eller färska bär.`,
       { name: "Kakao", amount: 3, unit: "msk" },
       { name: "Socker", amount: 0.75, unit: "dl" },
       { name: "Salt", amount: 1, unit: "nypa" },
-      { name: "Vaniljsocker", amount: 1, unit: "tsk" },
+      { name: "Vanilinsocker", amount: 1, unit: "tsk" },
     ],
   };
 
@@ -364,6 +378,7 @@ Servera ljummen eller kall med en klick kvarg, grädde eller färska bär.`,
     chokladpuddingRecipe.description,
     chokladpuddingRecipe.instructions,
     chokladpuddingRecipe.servings,
+    userId,
   );
   const chokladpuddingId = chokladpuddingResult.lastInsertRowid;
 
@@ -384,7 +399,188 @@ Servera ljummen eller kall med en klick kvarg, grädde eller färska bär.`,
   insertRecipeTag.run(chokladpuddingId, efterrattTagId);
 
   console.log(
-    `Seeded ${categories.length} categories, ${products.length} products, 2 tags, and 2 recipes`,
+    `Seeded ${categories.length} categories, ${products.length} products, 2 tags, and 2 recipes for user 'osloh'`,
+  );
+
+  // Create test user "test" with password "test" and some test data
+  const testPasswordHash = bcrypt.hashSync("test", 10);
+  const testUserResult = db
+    .prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)")
+    .run("test", testPasswordHash);
+  const testUserId = testUserResult.lastInsertRowid;
+  console.log(`Created user 'test' with id ${testUserId}`);
+
+  // Test categories
+  const testCategories = [
+    { name: "Frukt", sort_order: 1 },
+    { name: "Grönsaker", sort_order: 2 },
+    { name: "Mejeriprodukter", sort_order: 3 },
+    { name: "Torrvaror", sort_order: 4 },
+  ];
+
+  const testCategoryMap = {};
+  for (const cat of testCategories) {
+    const result = insertCategory.run(cat.name, cat.sort_order, testUserId);
+    testCategoryMap[cat.name] = result.lastInsertRowid;
+  }
+
+  // Test products
+  const testProducts = [
+    // Frukt
+    { name: "Äpple", category: "Frukt", default_unit: "st" },
+    { name: "Banan", category: "Frukt", default_unit: "st" },
+    { name: "Apelsin", category: "Frukt", default_unit: "st" },
+    { name: "Päron", category: "Frukt", default_unit: "st" },
+    { name: "Kiwi", category: "Frukt", default_unit: "st" },
+
+    // Grönsaker
+    { name: "Tomat", category: "Grönsaker", default_unit: "st" },
+    { name: "Gurka", category: "Grönsaker", default_unit: "st" },
+    { name: "Morot", category: "Grönsaker", default_unit: "st" },
+    { name: "Paprika", category: "Grönsaker", default_unit: "st" },
+    { name: "Lök", category: "Grönsaker", default_unit: "st" },
+
+    // Mejeriprodukter
+    { name: "Mjölk", category: "Mejeriprodukter", default_unit: "l" },
+    { name: "Smör", category: "Mejeriprodukter", default_unit: "st" },
+    { name: "Ost", category: "Mejeriprodukter", default_unit: "st" },
+    { name: "Yoghurt", category: "Mejeriprodukter", default_unit: "st" },
+    { name: "Grädde", category: "Mejeriprodukter", default_unit: "dl" },
+    { name: "Ägg", category: "Mejeriprodukter", default_unit: "st" },
+    { name: "Keso", category: "Mejeriprodukter", default_unit: "g" },
+
+    // Torrvaror (för receptet)
+    { name: "Havregryn", category: "Torrvaror", default_unit: "dl" },
+    { name: "Kakao", category: "Torrvaror", default_unit: "msk" },
+    { name: "Socker", category: "Torrvaror", default_unit: "dl" },
+    {
+      name: "Salt",
+      category: "Torrvaror",
+      default_unit: "nypa",
+      is_staple: true,
+    },
+    { name: "Vanilinsocker", category: "Torrvaror", default_unit: "tsk" },
+  ];
+
+  const testProductMap = {};
+  for (const product of testProducts) {
+    const categoryId = testCategoryMap[product.category];
+    const result = insertProduct.run(
+      product.name,
+      categoryId,
+      product.default_unit,
+      product.is_staple ? 1 : 0,
+      0,
+      testUserId,
+    );
+    testProductMap[product.name.toLowerCase()] = result.lastInsertRowid;
+  }
+
+  // Add recipe for test user
+  const testRecipeResult = insertRecipe.run(
+    "Oskars Chokladpudding med keso och banan",
+    "En nyttigare chokladpudding med keso och banan.",
+    chokladpuddingRecipe.instructions,
+    chokladpuddingRecipe.servings,
+    testUserId,
+  );
+  const testRecipeId = testRecipeResult.lastInsertRowid;
+
+  chokladpuddingRecipe.ingredients.forEach((ing, index) => {
+    const productId = testProductMap[ing.name.toLowerCase()] || null;
+    const customName = productId ? null : ing.name;
+    insertIngredient.run(
+      testRecipeId,
+      productId,
+      customName,
+      ing.amount,
+      ing.unit,
+      index,
+    );
+  });
+
+  console.log(
+    `Seeded ${testCategories.length} categories, ${testProducts.length} products, and 1 recipe for user 'test'`,
+  );
+
+  // Create user "mapa" with password "mapa"
+  const mapaPasswordHash = bcrypt.hashSync("mapa", 10);
+  const mapaUserResult = db
+    .prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)")
+    .run("mapa", mapaPasswordHash);
+  const mapaUserId = mapaUserResult.lastInsertRowid;
+  console.log(`Created user 'mapa' with id ${mapaUserId}`);
+
+  // Mapa categories
+  const mapaCategories = [
+    { name: "Mejeriprodukter", sort_order: 1 },
+    { name: "Frukt", sort_order: 2 },
+    { name: "Torrvaror", sort_order: 3 },
+  ];
+
+  const mapaCategoryMap = {};
+  for (const cat of mapaCategories) {
+    const result = insertCategory.run(cat.name, cat.sort_order, mapaUserId);
+    mapaCategoryMap[cat.name] = result.lastInsertRowid;
+  }
+
+  // Mapa products (for recipe)
+  const mapaProducts = [
+    { name: "Mjölk", category: "Mejeriprodukter", default_unit: "l" },
+    { name: "Ägg", category: "Mejeriprodukter", default_unit: "st" },
+    { name: "Keso", category: "Mejeriprodukter", default_unit: "g" },
+    { name: "Banan", category: "Frukt", default_unit: "st" },
+    { name: "Havregryn", category: "Torrvaror", default_unit: "dl" },
+    { name: "Kakao", category: "Torrvaror", default_unit: "msk" },
+    { name: "Socker", category: "Torrvaror", default_unit: "dl" },
+    {
+      name: "Salt",
+      category: "Torrvaror",
+      default_unit: "nypa",
+      is_staple: true,
+    },
+    { name: "Vanilinsocker", category: "Torrvaror", default_unit: "tsk" },
+  ];
+
+  const mapaProductMap = {};
+  for (const product of mapaProducts) {
+    const categoryId = mapaCategoryMap[product.category];
+    const result = insertProduct.run(
+      product.name,
+      categoryId,
+      product.default_unit,
+      product.is_staple ? 1 : 0,
+      0,
+      mapaUserId,
+    );
+    mapaProductMap[product.name.toLowerCase()] = result.lastInsertRowid;
+  }
+
+  // Add recipe for mapa user
+  const mapaRecipeResult = insertRecipe.run(
+    "Oskars Chokladpudding med keso och banan",
+    "En nyttigare chokladpudding med keso och banan.",
+    chokladpuddingRecipe.instructions,
+    chokladpuddingRecipe.servings,
+    mapaUserId,
+  );
+  const mapaRecipeId = mapaRecipeResult.lastInsertRowid;
+
+  chokladpuddingRecipe.ingredients.forEach((ing, index) => {
+    const productId = mapaProductMap[ing.name.toLowerCase()] || null;
+    const customName = productId ? null : ing.name;
+    insertIngredient.run(
+      mapaRecipeId,
+      productId,
+      customName,
+      ing.amount,
+      ing.unit,
+      index,
+    );
+  });
+
+  console.log(
+    `Seeded ${mapaCategories.length} categories, ${mapaProducts.length} products, and 1 recipe for user 'mapa'`,
   );
 }
 

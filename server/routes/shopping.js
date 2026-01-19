@@ -1,12 +1,17 @@
 import express from "express";
 import { getDb } from "../db/connection.js";
 import { broadcastShoppingChange } from "../services/sync.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
+
+// All routes require authentication
+router.use(requireAuth);
 
 // GET /api/shopping - hämta aktiv lista grupperat per kategori
 router.get("/", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
 
   const items = db
     .prepare(
@@ -20,10 +25,11 @@ router.get("/", (req, res) => {
 		FROM shopping_items si
 		LEFT JOIN products p ON si.product_id = p.id
 		LEFT JOIN store_categories sc ON COALESCE(si.store_category_id, p.store_category_id) = sc.id
+		WHERE si.user_id = ?
 		ORDER BY sc.sort_order, si.is_done, p.is_misc, COALESCE(si.custom_name, p.name)
 	`,
     )
-    .all();
+    .all(userId);
 
   res.json(items);
 });
@@ -33,6 +39,7 @@ router.get("/", (req, res) => {
 // quantity kan vara null för "utan kvantitet"
 router.post("/", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { product_id, quantity, unit, notes } = req.body;
 
   if (!product_id) {
@@ -40,8 +47,8 @@ router.post("/", (req, res) => {
   }
 
   const product = db
-    .prepare("SELECT * FROM products WHERE id = ?")
-    .get(product_id);
+    .prepare("SELECT * FROM products WHERE id = ? AND user_id = ?")
+    .get(product_id, userId);
   if (!product) {
     return res.status(404).json({ error: "Product not found" });
   }
@@ -56,10 +63,10 @@ router.post("/", (req, res) => {
     .prepare(
       `
 		SELECT * FROM shopping_items
-		WHERE product_id = ? AND is_done = 0
+		WHERE product_id = ? AND is_done = 0 AND user_id = ?
 	`,
     )
-    .get(product_id);
+    .get(product_id, userId);
 
   let item;
   if (existing) {
@@ -97,18 +104,18 @@ router.post("/", (req, res) => {
       )
       .get(existing.id);
 
-    broadcastShoppingChange("update", item);
+    broadcastShoppingChange("update", item, userId);
     res.json(item);
   } else {
     // Insert new item
     const result = db
       .prepare(
         `
-			INSERT INTO shopping_items (product_id, quantity, unit, notes)
-			VALUES (?, ?, ?, ?)
+			INSERT INTO shopping_items (product_id, quantity, unit, notes, user_id)
+			VALUES (?, ?, ?, ?, ?)
 		`,
       )
-      .run(product_id, effectiveQuantity, effectiveUnit, notes || null);
+      .run(product_id, effectiveQuantity, effectiveUnit, notes || null, userId);
 
     item = db
       .prepare(
@@ -122,7 +129,7 @@ router.post("/", (req, res) => {
       )
       .get(result.lastInsertRowid);
 
-    broadcastShoppingChange("add", item);
+    broadcastShoppingChange("add", item, userId);
     res.status(201).json(item);
   }
 });
@@ -131,6 +138,7 @@ router.post("/", (req, res) => {
 // Om varan redan finns i listan, uppdatera kvantiteten istället
 router.post("/custom", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { custom_name, store_category_id, quantity, unit, notes } = req.body;
 
   if (!custom_name) {
@@ -145,10 +153,10 @@ router.post("/custom", (req, res) => {
     .prepare(
       `
 		SELECT * FROM shopping_items
-		WHERE custom_name = ? AND unit = ? AND is_done = 0
+		WHERE custom_name = ? AND unit = ? AND is_done = 0 AND user_id = ?
 	`,
     )
-    .get(custom_name, effectiveUnit);
+    .get(custom_name, effectiveUnit, userId);
 
   let item;
   if (existing) {
@@ -173,15 +181,15 @@ router.post("/custom", (req, res) => {
       )
       .get(existing.id);
 
-    broadcastShoppingChange("update", item);
+    broadcastShoppingChange("update", item, userId);
     res.json(item);
   } else {
     // Insert new item
     const result = db
       .prepare(
         `
-			INSERT INTO shopping_items (custom_name, store_category_id, quantity, unit, notes)
-			VALUES (?, ?, ?, ?, ?)
+			INSERT INTO shopping_items (custom_name, store_category_id, quantity, unit, notes, user_id)
+			VALUES (?, ?, ?, ?, ?, ?)
 		`,
       )
       .run(
@@ -190,6 +198,7 @@ router.post("/custom", (req, res) => {
         effectiveQuantity,
         effectiveUnit,
         notes || null,
+        userId,
       );
 
     item = db
@@ -203,7 +212,7 @@ router.post("/custom", (req, res) => {
       )
       .get(result.lastInsertRowid);
 
-    broadcastShoppingChange("add", item);
+    broadcastShoppingChange("add", item, userId);
     res.status(201).json(item);
   }
 });
@@ -211,12 +220,13 @@ router.post("/custom", (req, res) => {
 // PUT /api/shopping/:id - uppdatera quantity/unit/done
 router.put("/:id", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { id } = req.params;
   const body = req.body;
 
   const existing = db
-    .prepare("SELECT * FROM shopping_items WHERE id = ?")
-    .get(id);
+    .prepare("SELECT * FROM shopping_items WHERE id = ? AND user_id = ?")
+    .get(id, userId);
   if (!existing) {
     return res.status(404).json({ error: "Shopping item not found" });
   }
@@ -231,9 +241,9 @@ router.put("/:id", (req, res) => {
     `
 		UPDATE shopping_items
 		SET quantity = ?, unit = ?, notes = ?, is_done = ?, updated_at = CURRENT_TIMESTAMP
-		WHERE id = ?
+		WHERE id = ? AND user_id = ?
 	`,
-  ).run(quantity, unit, notes, is_done, id);
+  ).run(quantity, unit, notes, is_done, id, userId);
 
   const item = db
     .prepare(
@@ -247,35 +257,42 @@ router.put("/:id", (req, res) => {
     )
     .get(id);
 
-  broadcastShoppingChange("update", item);
+  broadcastShoppingChange("update", item, userId);
   res.json(item);
 });
 
 // DELETE /api/shopping/:id - ta bort enskild
 router.delete("/:id", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
   const { id } = req.params;
 
   const existing = db
-    .prepare("SELECT * FROM shopping_items WHERE id = ?")
-    .get(id);
+    .prepare("SELECT * FROM shopping_items WHERE id = ? AND user_id = ?")
+    .get(id, userId);
   if (!existing) {
     return res.status(404).json({ error: "Shopping item not found" });
   }
 
-  db.prepare("DELETE FROM shopping_items WHERE id = ?").run(id);
+  db.prepare("DELETE FROM shopping_items WHERE id = ? AND user_id = ?").run(
+    id,
+    userId,
+  );
 
-  broadcastShoppingChange("delete", { id: parseInt(id) });
+  broadcastShoppingChange("delete", { id: parseInt(id) }, userId);
   res.json({ message: "Shopping item deleted", id: parseInt(id) });
 });
 
 // POST /api/shopping/reset - rensa hela listan
 router.post("/reset", (req, res) => {
   const db = getDb();
+  const userId = req.user.id;
 
-  const result = db.prepare("DELETE FROM shopping_items").run();
+  const result = db
+    .prepare("DELETE FROM shopping_items WHERE user_id = ?")
+    .run(userId);
 
-  broadcastShoppingChange("reset", { itemsDeleted: result.changes });
+  broadcastShoppingChange("reset", { itemsDeleted: result.changes }, userId);
   res.json({ message: "Shopping list cleared", itemsDeleted: result.changes });
 });
 

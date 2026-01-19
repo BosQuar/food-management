@@ -1,13 +1,24 @@
+import { authStore } from "./stores/auth.svelte";
+
 const API_BASE = "/api";
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = authStore.token;
+
   const response = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },
   });
+
+  if (response.status === 401) {
+    authStore.handleUnauthorized();
+    throw new Error("Unauthorized");
+  }
+
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
