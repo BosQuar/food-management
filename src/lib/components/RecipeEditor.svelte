@@ -4,6 +4,7 @@
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
   import { Textarea } from "$lib/components/ui/textarea";
+  import InstructionEditor from "./InstructionEditor.svelte";
   import {
     Card,
     CardContent,
@@ -141,6 +142,16 @@
   }
 
   const canSave = $derived(name.trim().length > 0);
+
+  // Enrich ingredients with product names for InstructionEditor
+  const ingredientsWithNames = $derived(
+    ingredients.map((ing) => ({
+      ...ing,
+      product_name: ing.product_id
+        ? products.find((p) => p.id === ing.product_id)?.name
+        : undefined,
+    })),
+  );
 </script>
 
 <div class="space-y-6">
@@ -235,9 +246,13 @@
 
   <div class="space-y-2">
     <Label for="instructions">Instruktioner</Label>
-    <Textarea
-      id="instructions"
-      bind:value={instructions}
+    <p class="text-xs text-muted-foreground">
+      Skriv @ för att referera till ingredienser med automatisk skalning
+    </p>
+    <InstructionEditor
+      value={instructions}
+      ingredients={ingredientsWithNames}
+      onchange={(v) => (instructions = v)}
       placeholder="Beskriv hur receptet tillagas..."
       rows={8}
     />

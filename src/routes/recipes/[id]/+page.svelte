@@ -16,6 +16,7 @@
   import { recipesStore } from "$lib/stores/recipes.svelte";
   import { shoppingStore } from "$lib/stores/shopping.svelte";
   import PortionScaler from "$lib/components/PortionScaler.svelte";
+  import InstructionRenderer from "$lib/components/InstructionRenderer.svelte";
   import { ArrowLeft, Pencil, Trash2, ShoppingCart } from "@lucide/svelte";
 
   let showDeleteDialog = $state(false);
@@ -212,7 +213,11 @@
           <CardTitle class="text-base">Instruktioner</CardTitle>
         </CardHeader>
         <CardContent>
-          <p class="text-sm whitespace-pre-line">{recipe.instructions}</p>
+          <InstructionRenderer
+            instructions={recipe.instructions}
+            ingredients={recipe.ingredients}
+            {scaleFactor}
+          />
         </CardContent>
       </Card>
     {/if}
