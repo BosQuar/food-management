@@ -36,11 +36,11 @@ COPY package*.json ./
 RUN npm ci --omit=dev && \
     apk del python3 make g++
 
-# Copy built assets from builder
-COPY --from=builder /app/build ./build
-
 # Copy server files (compiled JS + SQL schema already included from build:server)
 COPY --from=builder /app/server/dist ./server/dist
+
+# Copy built assets from builder to where server expects it (../build relative to server/dist/server/)
+COPY --from=builder /app/build ./server/dist/build
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
