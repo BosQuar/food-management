@@ -328,10 +328,10 @@ export function seed(force = false): void {
     description: "En krämig sweet chili-kyckling som tillagas i ugn med ris.",
     servings: 6,
     instructions: `1. Ugn 200°C
-2. Blanda grädde, crème fraîche, sweet chili, pressad vitlök och kryddor
-3. Häll okokt ris i botten av formen
-4. Tillsätt buljongen, rör om
-5. Lägg kycklingen ovanpå, salta & peppra
+2. Blanda @[Matlagningsgrädde], @[Creme fraiche], @[Sweet chili], pressad @[Vitlök] och @[Paprikapulver]
+3. Häll @[Ris] i botten av formen
+4. Tillsätt @[Vatten] och @[Kycklingbuljong], rör om
+5. Lägg @[Kycklingfilé] ovanpå, salta & peppra
 6. Häll såsen över kycklingen
 7. Täck med folie, ugn 40-45 min
 8. Ta bort folien, ugn 10-15 min till för fin yta`,
@@ -381,9 +381,9 @@ export function seed(force = false): void {
     description: "En nyttigare chokladpudding med keso och banan.",
     servings: 4,
     instructions: `1. Sätt ugnen på 180°C
-2. Mosa bananerna i en bunke
-3. Tillsätt keso, ägg, socker, kakao, vaniljsocker och salt - vispa ihop till en slät smet
-4. Rör ner havregryn
+2. Mosa @[Banan] i en bunke
+3. Tillsätt @[Keso], @[Ägg], @[Socker], @[Kakao], @[Vanilinsocker] och @[Salt] - vispa ihop till en slät smet
+4. Rör ner @[Havregryn]
 5. Häll smeten i en smord ugnsform (ca 20x20 cm) eller fyra portionsformar
 6. Grädda i mitten av ugnen 25-30 minuter tills ytan satt sig men mitten fortfarande är lite mjuk
 
